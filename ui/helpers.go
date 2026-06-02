@@ -30,6 +30,26 @@ func renderProgressBar(width int, ratio float64) string {
 	return strings.Repeat("█", filledLen) + strings.Repeat("░", emptyLen)
 }
 
+func renderStyledProgressBar(width int, ratio float64) string {
+	if ratio < 0 {
+		ratio = 0
+	}
+	if ratio > 1 {
+		ratio = 1
+	}
+	filledLen := int(math.Round(float64(width) * ratio))
+	emptyLen := width - filledLen
+	if filledLen < 0 {
+		filledLen = 0
+	}
+	if emptyLen < 0 {
+		emptyLen = 0
+	}
+	filledStr := GreenStyle.Render(strings.Repeat("█", filledLen))
+	emptyStr := GrayLightStyle.Render(strings.Repeat("░", emptyLen))
+	return filledStr + emptyStr
+}
+
 func formatDue(dueAt time.Time) string {
 	now := time.Now()
 	if dueAt.Before(now) {
