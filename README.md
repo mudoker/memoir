@@ -14,6 +14,7 @@ FlashTUI is a local-first, keyboard-driven, exceptionally aesthetic flashcard ap
 ### Prerequisites
 - **Go compiler**: Go 1.21 or higher installed on your path.
 - **Terminal Emulator**: Any modern terminal with UTF-8 character and 256-color support.
+  - *Icon/Emoji Support:* FlashTUI uses standard Unicode and emoji icons (e.g. `🔥`, `📂`, `🗃️`, `⏳`, `🎯`, `🏆`, `📅`). If icons appear as hollow boxes or fail to render in your environment, configure your terminal emulator to use a font package with emoji fallback support (such as *Noto Color Emoji*) or install and use a **Nerd Font** (e.g., *JetBrainsMono Nerd Font*, *FiraCode Nerd Font*) for full glyph coverage.
 
 ### Compilation
 From the project workspace root directory, compile the binary:
