@@ -114,7 +114,8 @@ func (m Model) ViewDashboard() string {
 	bar.WriteString(modeBadge + " ")
 
 	if m.UIMode == ModeSearch {
-		bar.WriteString(m.SearchInput.View())
+		matchesCount := len(m.FilteredCards)
+		bar.WriteString(m.SearchInput.View() + GrayLightStyle.Render(fmt.Sprintf("  (%d matches)", matchesCount)))
 	} else if m.UIMode == ModeConsole {
 		bar.WriteString(m.ConsoleInput.View())
 	} else {
