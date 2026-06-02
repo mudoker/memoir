@@ -140,6 +140,19 @@ func (m Model) UpdateDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "d":
 		m.DPressed = true
 		return m, nil
+
+	case "?":
+		m.UIMode = ModeHelp
+		return m, nil
+
+	case "tab":
+		// Toggle active panel with Tab as a convenience
+		if m.ActivePanel == PanelDecks {
+			m.ActivePanel = PanelCards
+		} else {
+			m.ActivePanel = PanelDecks
+		}
+		m.RefreshData()
 	}
 
 	return m, nil

@@ -8,36 +8,54 @@ import (
 )
 
 func (m Model) renderLeftPanel(leftW, panelH int) string {
-	leftStyle := PanelStyle.Width(leftW - 4).Height(panelH)
-	if m.ActivePanel == PanelDecks && m.UIMode == ModeDashboard {
-		leftStyle = ActivePanelStyle.Width(leftW - 4).Height(panelH)
+	isActive := m.ActivePanel == PanelDecks && m.UIMode == ModeDashboard
+
+	var borderColor lipgloss.Color
+	if isActive {
+		borderColor = AccentColor
+	} else {
+		borderColor = GrayMidColor
 	}
 
-	var decksStr strings.Builder
-	var headerTitle string
-	if m.ActivePanel == PanelDecks && m.UIMode == ModeDashboard {
-		headerTitle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(WhiteColor).
-			Background(AccentColor).
-			Padding(0, 1).
-			Render(" ● DECKS MANAGER ")
+	leftStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		Padding(0, 1).
+		Width(leftW - 2).
+		Height(panelH)
+
+	var sb strings.Builder
+
+	// ── Section header ─────────────────────────────────────────────────────
+	var headerLabel string
+	if isActive {
+		headerLabel = lipgloss.NewStyle().
+			Bold(true).Foreground(GrayDarkColor).Background(AccentColor).
+			Padding(0, 1).Render("DECKS")
+		headerLabel += " " + lipgloss.NewStyle().
+			Foreground(AccentColor).Render(fmt.Sprintf("(%d)", len(m.Decks)))
 	} else {
-		headerTitle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(TextColor).
-			Background(GrayMidColor).
-			Padding(0, 1).
-			Render(" ⦾ DECKS MANAGER ")
+		headerLabel = lipgloss.NewStyle().
+			Bold(true).Foreground(GrayLightColor).Background(GrayMidColor).
+			Padding(0, 1).Render("DECKS")
+		headerLabel += " " + GrayLightStyle.Render(fmt.Sprintf("(%d)", len(m.Decks)))
 	}
-	decksStr.WriteString(headerTitle + "\n\n")
+	sb.WriteString(headerLabel + "\n")
+	sb.WriteString(GrayLightStyle.Render(strings.Repeat("─", leftW-4)) + "\n")
+
+	// ── Deck list ──────────────────────────────────────────────────────────
+	innerW := leftW - 4
+	if innerW < 8 {
+		innerW = 8
+	}
 
 	if len(m.Decks) == 0 {
-		decksStr.WriteString(" (No decks created)\n Press 'a' to create.")
+		sb.WriteString("\n" + GrayLightStyle.Render("  No decks yet.") + "\n")
+		sb.WriteString(GrayLightStyle.Render("  Press 'a' to create one."))
 	} else {
-		visibleHeight := panelH - 2
+		visible := panelH - 3
 		start := m.DeckScrollOffset
-		end := start + visibleHeight
+		end := start + visible
 		if end > len(m.Decks) {
 			end = len(m.Decks)
 		}
@@ -45,48 +63,85 @@ func (m Model) renderLeftPanel(leftW, panelH int) string {
 		for idx := start; idx < end; idx++ {
 			d := m.Decks[idx]
 			isSel := m.SelectedDeckIdx == idx
-			nameText := d.Name
-			var badge string
-			if d.CardCount > 0 {
-				if d.DueCount > 0 {
-					badge = fmt.Sprintf("%s%s%s",
-						GrayLightStyle.Render("("),
-						GreenStyle.Bold(true).Render(fmt.Sprintf("%d", d.DueCount)) + GrayLightStyle.Render(fmt.Sprintf("/%d due", d.CardCount)),
-						GrayLightStyle.Render(")"),
-					)
-				} else {
-					badge = GrayLightStyle.Render(fmt.Sprintf("(0/%d due)", d.CardCount))
-				}
-			} else {
-				badge = GrayLightStyle.Render("(empty)")
-			}
 
-			if isSel {
-				if m.ActivePanel == PanelDecks {
-					nameText = CursorStyle.Render(nameText)
-				} else {
-					nameText = AccentStyle.Bold(true).Render(nameText)
-				}
-			}
-
+			// Tree prefix
 			prefix := ""
 			if d.Depth > 0 {
-				prefix = strings.Repeat("│   ", d.Depth-1)
+				prefix = strings.Repeat("  ", d.Depth-1)
 				if isLastChild(m.Decks, idx) {
-					prefix += "└── "
+					prefix += "└ "
 				} else {
-					prefix += "├── "
+					prefix += "├ "
 				}
 			}
 
-			if isSel {
-				decksStr.WriteString(fmt.Sprintf(" ▶  %s%s %s\n", prefix, nameText, badge))
+			// Badge text (due / total)
+			var badgeRaw string
+			if d.CardCount == 0 {
+				badgeRaw = "empty"
+			} else if d.DueCount > 0 {
+				badgeRaw = fmt.Sprintf("%d/%d", d.DueCount, d.CardCount)
 			} else {
-				decksStr.WriteString(fmt.Sprintf("    %s%s %s\n", prefix, nameText, badge))
+				badgeRaw = fmt.Sprintf("0/%d", d.CardCount)
 			}
+
+			nameMaxW := innerW - len(prefix) - len(badgeRaw) - 3
+			if nameMaxW < 4 {
+				nameMaxW = 4
+			}
+			nameText := truncate(d.Name, nameMaxW)
+
+			rowText := fmt.Sprintf(" %s%s", prefix, nameText)
+			rowText = padRight(rowText, innerW-len(badgeRaw)-1) + " " + badgeRaw
+
+			var rowRendered string
+			if isSel {
+				if isActive {
+					rowRendered = lipgloss.NewStyle().
+						Bold(true).
+						Foreground(GrayDarkColor).
+						Background(AccentColor).
+						Width(innerW).
+						Render(rowText)
+				} else {
+					rowRendered = lipgloss.NewStyle().
+						Foreground(WhiteColor).
+						Background(GrayMidColor).
+						Width(innerW).
+						Render(rowText)
+				}
+			} else {
+				// Color-code the badge
+				var coloredBadge string
+				if d.CardCount == 0 {
+					coloredBadge = GrayLightStyle.Render(badgeRaw)
+				} else if d.DueCount > 0 {
+					coloredBadge = GreenStyle.Bold(true).Render(fmt.Sprintf("%d", d.DueCount)) +
+						GrayLightStyle.Render(fmt.Sprintf("/%d", d.CardCount))
+				} else {
+					coloredBadge = GrayLightStyle.Render(badgeRaw)
+				}
+
+				nameRendered := truncate(d.Name, nameMaxW)
+				prefixRendered := GrayLightStyle.Render(prefix)
+				rowRendered = " " + prefixRendered + nameRendered
+				padding := innerW - lipgloss.Width(rowRendered) - lipgloss.Width(coloredBadge) - 1
+				if padding > 0 {
+					rowRendered += strings.Repeat(" ", padding)
+				}
+				rowRendered += " " + coloredBadge
+			}
+			sb.WriteString(rowRendered + "\n")
+		}
+
+		// Scroll indicator
+		if len(m.Decks) > visible {
+			info := fmt.Sprintf(" %d-%d / %d", start+1, end, len(m.Decks))
+			sb.WriteString("\n" + GrayLightStyle.Render(info))
 		}
 	}
-	return leftStyle.Render(decksStr.String())
+
+	return leftStyle.Render(sb.String())
 }
 
 func MutedBadgeStyle(count int) string {

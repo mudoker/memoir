@@ -8,60 +8,115 @@ import (
 )
 
 func (m Model) renderRightPanel(rightW, panelH int) string {
-	rightStyle := PanelStyle.Width(rightW - 4).Height(panelH)
-	if m.ActivePanel == PanelCards && m.UIMode == ModeDashboard {
-		rightStyle = ActivePanelStyle.Width(rightW - 4).Height(panelH)
+	isActive := m.ActivePanel == PanelCards && m.UIMode == ModeDashboard
+
+	var borderColor lipgloss.Color
+	if isActive {
+		borderColor = AccentSecColor
+	} else {
+		borderColor = GrayMidColor
 	}
 
-	var cardsStr strings.Builder
-	var headerTitle string
-	if m.ActivePanel == PanelCards && m.UIMode == ModeDashboard {
-		headerTitle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(WhiteColor).
-			Background(AccentSecColor).
-			Padding(0, 1).
-			Render(" ● CARDS IN SELECTION ")
+	rightStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		Padding(0, 1).
+		Width(rightW - 2).
+		Height(panelH)
+
+	var sb strings.Builder
+
+	// ── Section header ──────────────────────────────────────────────────────
+	var headerLabel string
+	cardCount := len(m.FilteredCards)
+	if isActive {
+		headerLabel = lipgloss.NewStyle().
+			Bold(true).Foreground(GrayDarkColor).Background(AccentSecColor).
+			Padding(0, 1).Render("CARDS")
+		headerLabel += " " + lipgloss.NewStyle().
+			Foreground(AccentSecColor).Render(fmt.Sprintf("(%d)", cardCount))
 	} else {
-		headerTitle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(TextColor).
-			Background(GrayMidColor).
-			Padding(0, 1).
-			Render(" ⦾ CARDS IN SELECTION ")
+		headerLabel = lipgloss.NewStyle().
+			Bold(true).Foreground(GrayLightColor).Background(GrayMidColor).
+			Padding(0, 1).Render("CARDS")
+		headerLabel += " " + GrayLightStyle.Render(fmt.Sprintf("(%d)", cardCount))
 	}
+
 	if m.TagFilter != "" {
-		badgeText := fmt.Sprintf(" #%s ", m.TagFilter)
-		headerTitle += " " + AccentSecStyle.Bold(true).Background(GrayMidColor).Render(badgeText)
+		tagBadge := lipgloss.NewStyle().
+			Bold(true).Foreground(AccentSecColor).Background(GrayMidColor).
+			Padding(0, 1).Render("#" + m.TagFilter)
+		headerLabel += "  " + tagBadge
 	}
-	cardsStr.WriteString(headerTitle + "\n\n")
+	sb.WriteString(headerLabel + "\n")
 
-	colIdW := 5
+	// ── Breadcrumb path ─────────────────────────────────────────────────────
+	var path []string
+	if len(m.Decks) > 0 && m.SelectedDeckIdx < len(m.Decks) {
+		curr := m.Decks[m.SelectedDeckIdx]
+		path = append(path, curr.Name)
+		pid := curr.ParentID
+		for pid != nil {
+			found := false
+			for i := range m.Decks {
+				if m.Decks[i].ID == *pid {
+					path = append([]string{m.Decks[i].Name}, path...)
+					pid = m.Decks[i].ParentID
+					found = true
+					break
+				}
+			}
+			if !found {
+				break
+			}
+		}
+	}
+	if len(path) > 0 {
+		pathText := strings.Join(path, " / ")
+		sb.WriteString(GrayLightStyle.Render("  "+pathText) + "\n")
+	}
+
+	innerW := rightW - 4
+	if innerW < 12 {
+		innerW = 12
+	}
+	sb.WriteString(GrayLightStyle.Render(strings.Repeat("─", innerW)) + "\n")
+
+	// ── Column layout ───────────────────────────────────────────────────────
+	colIdW := 4
 	colDueW := 11
-	colEaseW := 6
-	colRepW := 5
-	colTagsW := 12
-	colFrontW := rightW - 4 - colIdW - colDueW - colEaseW - colRepW - colTagsW - 15
-	if colFrontW < 10 {
-		colFrontW = 10
+	colEaseW := 5
+	colRepW := 4
+	colTagsW := 13
+	colFrontW := innerW - colIdW - colDueW - colEaseW - colRepW - colTagsW - 15
+	if colFrontW < 8 {
+		colFrontW = 8
 	}
 
-	headerRow := fmt.Sprintf("%s │ %s │ %s │ %s │ %s │ %s\n",
-		padRight("ID", colIdW),
-		padRight("FRONT", colFrontW),
-		padRight("DUE", colDueW),
-		padRight("EASE", colEaseW),
-		padRight("REP", colRepW),
-		padRight("TAGS", colTagsW),
+	// Column headers
+	colHeaders := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colIdW).Render("ID"),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colFrontW).Render("FRONT"),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colDueW).Render("DUE"),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colEaseW).Render("EASE"),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colRepW).Render("REP"),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colTagsW).Render("TAGS"),
 	)
-	cardsStr.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render(headerRow))
+	sb.WriteString(colHeaders + "\n")
+	sb.WriteString(GrayLightStyle.Render(strings.Repeat("─", innerW)) + "\n")
 
+	// ── Card rows ──────────────────────────────────────────────────────────
 	if len(m.FilteredCards) == 0 {
-		cardsStr.WriteString("\n (No cards matching filter/selection)\n Press 'a' to add a card.")
+		sb.WriteString("\n")
+		sb.WriteString("  " + GrayLightStyle.Render("No cards in this deck.") + "\n")
+		sb.WriteString("  " + GrayLightStyle.Render("Press 'a' to add one, or switch deck with j/k."))
 	} else {
-		visibleHeight := panelH - 3
+		visibleH := panelH - 7
+		if visibleH < 1 {
+			visibleH = 1
+		}
 		start := m.CardScrollOffset
-		end := start + visibleHeight
+		end := start + visibleH
 		if end > len(m.FilteredCards) {
 			end = len(m.FilteredCards)
 		}
@@ -69,11 +124,12 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 		for idx := start; idx < end; idx++ {
 			c := m.FilteredCards[idx]
 			isSel := m.SelectedCardIdx == idx
-			idStr := fmt.Sprintf("%03d", c.ID)
-			frontText := c.Front
+
+			idStr := fmt.Sprintf("%d", c.ID)
 			dueText := formatDue(c.DueAt)
-			easeText := fmt.Sprintf("%.2f", c.EaseFactor)
+			easeText := fmt.Sprintf("%.1f", c.EaseFactor)
 			repText := fmt.Sprintf("%d", c.RepetitionCount)
+			frontText := truncate(c.Front, colFrontW)
 
 			var tagStrs []string
 			for _, t := range c.Tags {
@@ -81,47 +137,68 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 					tagStrs = append(tagStrs, "#"+t)
 				}
 			}
-			tagsText := strings.Join(tagStrs, " ")
-
-			// 1. Truncate raw strings to fit columns
-			frontText = truncate(frontText, colFrontW)
-			tagsText = truncate(tagsText, colTagsW)
-
-			// 2. Pad raw strings to column widths (safe from ANSI length drift)
-			paddedFront := padRight(frontText, colFrontW)
-			paddedDue := padRight(dueText, colDueW)
-			paddedEase := padRight(easeText, colEaseW)
-			paddedRep := padRight(repText, colRepW)
-			paddedTags := padRight(tagsText, colTagsW)
-			paddedId := padRight(idStr, colIdW)
-
-			// 3. Highlight query and apply column coloring
-			query := m.SearchInput.Value()
-			coloredFront := HighlightQuery(paddedFront, query)
-			coloredTags := HighlightQuery(paddedTags, query)
-			if query == "" && tagsText != "" {
-				coloredTags = AccentSecStyle.Render(paddedTags)
-			}
-
-			var coloredDue string
-			if dueText == "Instantly" {
-				coloredDue = GreenStyle.Bold(true).Render(paddedDue)
-			} else {
-				coloredDue = GrayLightStyle.Render(paddedDue)
-			}
-
-			row := fmt.Sprintf("%s │ %s │ %s │ %s │ %s │ %s", paddedId, coloredFront, coloredDue, paddedEase, paddedRep, coloredTags)
+			tagsText := truncate(strings.Join(tagStrs, " "), colTagsW)
 
 			if isSel {
-				if m.ActivePanel == PanelCards {
-					cardsStr.WriteString(CursorStyle.Render(row) + "\n")
+				// Full-width highlight row
+				rawRow := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
+					padRight(idStr, colIdW),
+					padRight(frontText, colFrontW),
+					padRight(dueText, colDueW),
+					padRight(easeText, colEaseW),
+					padRight(repText, colRepW),
+					padRight(tagsText, colTagsW),
+				)
+				rawRow = truncate(rawRow, innerW)
+				var selStyle lipgloss.Style
+				if isActive {
+					selStyle = lipgloss.NewStyle().
+						Bold(true).Foreground(GrayDarkColor).Background(AccentSecColor).
+						Width(innerW)
 				} else {
-					cardsStr.WriteString(AccentStyle.Render(row) + "\n")
+					selStyle = lipgloss.NewStyle().
+						Foreground(WhiteColor).Background(GrayMidColor).
+						Width(innerW)
 				}
+				sb.WriteString(selStyle.Render(rawRow) + "\n")
 			} else {
-				cardsStr.WriteString(row + "\n")
+				// Color-coded unselected row
+				query := m.SearchInput.Value()
+				coloredId := GrayLightStyle.Width(colIdW).Render(idStr)
+				coloredFront := lipgloss.NewStyle().Width(colFrontW).Render(HighlightQuery(padRight(frontText, colFrontW), query))
+
+				var coloredDue string
+				if dueText == "Instantly" {
+					coloredDue = GreenStyle.Bold(true).Width(colDueW).Render(dueText)
+				} else {
+					coloredDue = GrayLightStyle.Width(colDueW).Render(dueText)
+				}
+
+				var coloredEase string
+				if c.EaseFactor < 1.8 {
+					coloredEase = RedStyle.Width(colEaseW).Render(easeText)
+				} else if c.EaseFactor >= 2.5 {
+					coloredEase = GreenStyle.Width(colEaseW).Render(easeText)
+				} else {
+					coloredEase = YellowStyle.Width(colEaseW).Render(easeText)
+				}
+
+				coloredRep := GrayLightStyle.Width(colRepW).Render(repText)
+				coloredTags := AccentSecStyle.Width(colTagsW).Render(HighlightQuery(tagsText, query))
+
+				row := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
+					coloredId, coloredFront, coloredDue, coloredEase, coloredRep, coloredTags)
+				sb.WriteString(row + "\n")
 			}
 		}
+
+		// Scroll position indicator
+		if len(m.FilteredCards) > visibleH {
+			shown := end - start
+			indicator := fmt.Sprintf("  %d–%d of %d", start+1, start+shown, len(m.FilteredCards))
+			sb.WriteString("\n" + GrayLightStyle.Render(indicator))
+		}
 	}
-	return rightStyle.Render(cardsStr.String())
+
+	return rightStyle.Render(sb.String())
 }

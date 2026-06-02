@@ -19,9 +19,39 @@ FlashTUI is a local-first, keyboard-driven, exceptionally aesthetic flashcard ap
     ```bash
     # Install JetBrains Mono Nerd Font for developer symbols
     yay -S ttf-jetbrains-mono-nerd
-    # Install JoyPixels for emoji support
+    # Also available via paru
+    paru -S ttf-jetbrains-mono-nerd
+
+    # Install JoyPixels for emoji/color emoji support
     yay -S ttf-joypixels
+    # Or
+    paru -S ttf-joypixels
+
+    # Refresh the font cache after installation
+    fc-cache -fv
     ```
+
+### Icon Rendering Troubleshooting
+
+Even after installing the fonts above, icons may still not render if your terminal emulator is not configured to use the installed font. Follow the steps for your emulator:
+
+| Terminal | How to set the font |
+|---|---|
+| **Alacritty** | In `~/.config/alacritty/alacritty.toml`: `[font.normal] family = "JetBrainsMono Nerd Font"` |
+| **Kitty** | In `~/.config/kitty/kitty.conf`: `font_family JetBrainsMono Nerd Font` |
+| **WezTerm** | In `~/.config/wezterm/wezterm.lua`: `config.font = wezterm.font("JetBrainsMono Nerd Font")` |
+| **GNOME Terminal** | Edit > Preferences > Profile > Text tab → uncheck "Use system fixed-width font" → choose "JetBrainsMono Nerd Font" |
+| **Konsole** | Settings > Edit Current Profile > Appearance → change Font to "JetBrainsMono Nerd Font" |
+| **Foot** | In `~/.config/foot/foot.ini`: `[colors] font=JetBrainsMono Nerd Font:size=12` |
+
+After changing the font, **restart your terminal completely** (not just the tab). If emoji boxes persist, ensure your locale is UTF-8:
+```bash
+# Verify locale
+locale | grep UTF-8
+
+# If missing, set in /etc/locale.gen and run:
+sudo locale-gen
+```
 
 ### Compilation
 From the project workspace root directory, compile the binary:
@@ -61,10 +91,11 @@ The application will automatically initialize the base configuration at `~/.conf
 
 ### Console Commands (`:`)
 - `:w` : Force database sync update.
-- `:q` : Safely close SQLite and quit.
+- `:q` / `:q!` : Safely close SQLite and quit (force quit).
+- `:wq` / `:x` / `:wq!` / `:x!` : Save + quit (Vim-style).
 - `:tag <tag_name>` : Filter card selections by a specific tag. Run `:tag` with no arguments to clear the filter.
 - `:tags` : Display a list of all unique tags present in the current deck.
 - `:theme <name>` : Switch the TUI color theme dynamically. Available themes: `catppuccin`, `tokyonight`, `gruvbox`, `nord`, `monokai`. Run `:theme` with no arguments to see the usage list.
 - `:import <path>` : Parse cards from external Markdown file (headers = front, comment blocks = hints/tags).
 - `:export <deck_name> <path>` : Compile deck tree and cards recursively to JSON file.
-- `:help` / `:h` : Display list of all available console commands.
+- `:help` / `:h` : Display list of all available console commands (opens help panel).
