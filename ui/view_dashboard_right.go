@@ -68,24 +68,34 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 			}
 			tagsText := strings.Join(tagStrs, " ")
 
-			// Visual width truncation
+			// 1. Truncate raw strings to fit columns
 			frontText = truncate(frontText, colFrontW)
 			tagsText = truncate(tagsText, colTagsW)
 
-			// Search Query highlights
-			query := m.SearchInput.Value()
-			frontText = HighlightQuery(frontText, query)
-			tagsText = HighlightQuery(tagsText, query)
-
-			// Visual width right-padding
-			frontText = padRight(frontText, colFrontW)
-			dueText = padRight(dueText, colDueW)
-			easeText = padRight(easeText, colEaseW)
-			repText = padRight(repText, colRepW)
-			tagsText = padRight(tagsText, colTagsW)
+			// 2. Pad raw strings to column widths (safe from ANSI length drift)
+			paddedFront := padRight(frontText, colFrontW)
+			paddedDue := padRight(dueText, colDueW)
+			paddedEase := padRight(easeText, colEaseW)
+			paddedRep := padRight(repText, colRepW)
+			paddedTags := padRight(tagsText, colTagsW)
 			paddedId := padRight(idStr, colIdW)
 
-			row := fmt.Sprintf("%s %s %s %s %s %s", paddedId, frontText, dueText, easeText, repText, tagsText)
+			// 3. Highlight query and apply column coloring
+			query := m.SearchInput.Value()
+			coloredFront := HighlightQuery(paddedFront, query)
+			coloredTags := HighlightQuery(paddedTags, query)
+			if query == "" && tagsText != "" {
+				coloredTags = AccentSecStyle.Render(paddedTags)
+			}
+
+			var coloredDue string
+			if dueText == "Instantly" {
+				coloredDue = GreenStyle.Bold(true).Render(paddedDue)
+			} else {
+				coloredDue = GrayLightStyle.Render(paddedDue)
+			}
+
+			row := fmt.Sprintf("%s %s %s %s %s %s", paddedId, coloredFront, coloredDue, paddedEase, paddedRep, coloredTags)
 
 			if isSel {
 				if m.ActivePanel == PanelCards {
