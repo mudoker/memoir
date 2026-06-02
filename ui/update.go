@@ -38,6 +38,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.UpdateFormCard(msg)
 		case ModeReview:
 			return m.UpdateReview(msg)
+		case ModeHelp:
+			return m.UpdateHelp(msg)
 		default:
 			return m.UpdateDashboard(msg)
 		}

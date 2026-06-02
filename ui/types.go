@@ -19,6 +19,7 @@ const (
 	ModeFormCard
 	ModeConsole
 	ModeSearch
+	ModeHelp
 )
 
 type ActivePanel int

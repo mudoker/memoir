@@ -132,7 +132,8 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 		}
 
 	case ":help", ":h":
-		m.SetStatus("Commands: :w[!] (save) • :q[!]/:quit[!]/:exit[!] (exit) • :wq[!]/:x[!] (save & exit) • :tag <tag> • :tags • :import <path> • :export <deck> <path>", false)
+		m.UIMode = ModeHelp
+		m.SetStatus("Opened help panel.", false)
 
 	default:
 		m.SetStatus("Unknown command: "+op, true)
