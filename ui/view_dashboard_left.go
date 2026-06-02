@@ -14,7 +14,12 @@ func (m Model) renderLeftPanel(leftW, panelH int) string {
 	}
 
 	var decksStr strings.Builder
-	decksStr.WriteString(lipgloss.NewStyle().Bold(true).Underline(true).Render("DECKS MANAGER (Normal Mode)") + "\n\n")
+	decksStr.WriteString(lipgloss.NewStyle().
+		Bold(true).
+		Foreground(WhiteColor).
+		Background(AccentColor).
+		Padding(0, 1).
+		Render(" DECKS MANAGER ") + "\n\n")
 
 	if len(m.Decks) == 0 {
 		decksStr.WriteString(" (No decks created)\n Press 'a' to create.")

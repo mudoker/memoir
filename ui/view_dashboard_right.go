@@ -14,7 +14,12 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 	}
 
 	var cardsStr strings.Builder
-	headerTitle := lipgloss.NewStyle().Bold(true).Underline(true).Render("CARDS IN SELECTION")
+	headerTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(WhiteColor).
+		Background(AccentSecColor).
+		Padding(0, 1).
+		Render(" CARDS IN SELECTION ")
 	if m.TagFilter != "" {
 		badgeText := fmt.Sprintf(" #%s ", m.TagFilter)
 		headerTitle += " " + AccentSecStyle.Bold(true).Background(GrayMidColor).Render(badgeText)
