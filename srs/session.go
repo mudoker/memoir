@@ -24,6 +24,7 @@ type Session struct {
 	// Enhanced logic features
 	Lapses     map[int64]int // Maps card ID to number of session lapses (fails)
 	LeechCount int           // Total unique cards marked as leech in this session
+	Ratings    []int         // Track graded score history for statistics
 }
 
 func NewSession(cards []db.Card) *Session {
@@ -37,6 +38,7 @@ func NewSession(cards []db.Card) *Session {
 		TotalSessionCards:         len(cards),
 		CompletedCount:            0,
 		Lapses:                    make(map[int64]int),
+		Ratings:                   []int{},
 	}
 	copy(s.DueQueue, cards)
 
@@ -92,6 +94,8 @@ func (s *Session) GradeActiveCard(q int, database *db.DB) error {
 
 	card := *s.ActiveCard
 	now := time.Now()
+
+	s.Ratings = append(s.Ratings, q)
 
 	if q < 3 {
 		// Recall lapse: increment lapses counter

@@ -97,6 +97,10 @@ func (s *Session) Undo(database *db.DB) error {
 	s.IsFlipped = state.IsFlipped
 	s.ShowHint = state.ShowHint
 
+	if len(s.Ratings) > 0 {
+		s.Ratings = s.Ratings[:len(s.Ratings)-1]
+	}
+
 	// If card is restored, we reduce lapses if we track them
 	if s.ActiveCard != nil {
 		s.Lapses[s.ActiveCard.ID] = s.Lapses[s.ActiveCard.ID] - 1
