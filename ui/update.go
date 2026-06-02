@@ -18,6 +18,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		if msg.String() == "ctrl+c" {
+			_ = m.Database.Close()
+			return m, tea.Quit
+		}
+
 		if time.Since(m.StatusTime) > 3*time.Second {
 			m.StatusMsg = ""
 		}

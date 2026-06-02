@@ -24,6 +24,10 @@ func (m Model) UpdateDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	switch key {
+	case "q":
+		_ = m.Database.Close()
+		return m, tea.Quit
+
 	case ":":
 		m.UIMode = ModeConsole
 		m.ConsoleInput.SetValue("")

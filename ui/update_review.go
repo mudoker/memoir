@@ -13,7 +13,7 @@ func (m Model) UpdateReview(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	key := msg.String()
 
 	switch key {
-	case "esc":
+	case "esc", "q":
 		m.UIMode = ModeDashboard
 		m.RefreshData()
 		return m, nil
