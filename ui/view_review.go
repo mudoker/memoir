@@ -3,8 +3,11 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
+
+	"flashtui/srs"
 )
 
 func (m Model) ViewReview() string {
@@ -74,13 +77,20 @@ func (m Model) ViewReview() string {
 		wrappedBack := lipgloss.NewStyle().Width(m.Width - 16).Render(card.Back)
 		content.WriteString(wrappedBack + "\n\n")
 
-		// Dynamic Button-style confidence ratings
-		btn1 := RedStyle.Background(GrayMidColor).Bold(true).Render(" 1: Forgot ")
-		btn2 := YellowStyle.Background(GrayMidColor).Bold(true).Render(" 2: Hard ")
-		btn3 := AccentSecStyle.Background(GrayMidColor).Bold(true).Render(" 3: Good ")
-		btn4 := GreenStyle.Bold(true).Background(GrayMidColor).Render(" 4: Easy ")
-		btn5 := AccentStyle.Bold(true).Background(GrayMidColor).Render(" 5: Perfect ")
-		content.WriteString(GrayLightStyle.Render("Confidence Rating:") + "\n  " + btn1 + "  " + btn2 + "  " + btn3 + "  " + btn4 + "  " + btn5 + "\n\n")
+		// Dynamic Button-style confidence ratings with predicted next intervals
+		nowVal := time.Now()
+		next1 := srs.CalculateSM2(*card, 1, nowVal).Interval
+		next2 := srs.CalculateSM2(*card, 2, nowVal).Interval
+		next3 := srs.CalculateSM2(*card, 3, nowVal).Interval
+		next4 := srs.CalculateSM2(*card, 4, nowVal).Interval
+		next5 := srs.CalculateSM2(*card, 5, nowVal).Interval
+
+		btn1 := RedStyle.Background(GrayMidColor).Bold(true).Render(fmt.Sprintf(" 1: Forgot (%dd) ", next1))
+		btn2 := YellowStyle.Background(GrayMidColor).Bold(true).Render(fmt.Sprintf(" 2: Hard (%dd) ", next2))
+		btn3 := AccentSecStyle.Background(GrayMidColor).Bold(true).Render(fmt.Sprintf(" 3: Good (%dd) ", next3))
+		btn4 := GreenStyle.Bold(true).Background(GrayMidColor).Render(fmt.Sprintf(" 4: Easy (%dd) ", next4))
+		btn5 := AccentStyle.Bold(true).Background(GrayMidColor).Render(fmt.Sprintf(" 5: Perfect (%dd) ", next5))
+		content.WriteString(GrayLightStyle.Render("Confidence Rating (Next Interval):") + "\n  " + btn1 + "  " + btn2 + "  " + btn3 + "  " + btn4 + "  " + btn5 + "\n\n")
 	}
 
 	// Build upcoming queue visualizer
@@ -109,82 +119,4 @@ func (m Model) ViewReview() string {
 		Render(content.String())
 
 	return AddShadow(reviewBox)
-}
-
-func (m Model) viewSessionStatistics() string {
-	var b strings.Builder
-	b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(GreenColor).Underline(true).Render("🎉 STUDY SESSION COMPLETED!") + "\n\n")
-
-	// Compute session stats
-	totalReviews := len(m.Session.Ratings)
-	successReviews := 0
-	sumRatings := 0
-	for _, r := range m.Session.Ratings {
-		sumRatings += r
-		if r >= 3 {
-			successReviews++
-		}
-	}
-
-	accuracy := 0.0
-	avgScore := 0.0
-	if totalReviews > 0 {
-		accuracy = (float64(successReviews) / float64(totalReviews)) * 100
-		avgScore = float64(sumRatings) / float64(totalReviews)
-	}
-
-	uniqueLapses := 0
-	for _, count := range m.Session.Lapses {
-		if count > 0 {
-			uniqueLapses++
-		}
-	}
-
-	streak, _ := m.Database.GetDailyStreak()
-
-	b.WriteString(fmt.Sprintf("Graduated Cards  : %s\n", GreenStyle.Render(fmt.Sprintf("%d/%d", m.Session.CompletedCount, m.Session.TotalSessionCards))))
-	b.WriteString(fmt.Sprintf("Total Reviews    : %d attempts\n", totalReviews))
-	b.WriteString(fmt.Sprintf("Session Accuracy : %.1f%%\n", accuracy))
-	b.WriteString(fmt.Sprintf("Average Rating   : %.2f / 5.0\n", avgScore))
-	b.WriteString(fmt.Sprintf("Lapsed Cards     : %d\n", uniqueLapses))
-	b.WriteString(fmt.Sprintf("Current Streak   : 🔥 %d Days\n\n", streak))
-
-	b.WriteString(lipgloss.NewStyle().Bold(true).Underline(true).Render("Rating Distribution:") + "\n")
-	ratingCounts := make(map[int]int)
-	for _, r := range m.Session.Ratings {
-		ratingCounts[r]++
-	}
-	ratingLabels := []string{"Forgot", "Hard  ", "Good  ", "Easy  ", "Perf  "}
-	for r := 1; r <= 5; r++ {
-		count := ratingCounts[r]
-		bar := ""
-		if count > 0 {
-			bar = strings.Repeat("█", count)
-		}
-		var barColorStyle lipgloss.Style
-		switch r {
-		case 1:
-			barColorStyle = RedStyle
-		case 2:
-			barColorStyle = YellowStyle
-		case 3:
-			barColorStyle = AccentSecStyle
-		default:
-			barColorStyle = GreenStyle
-		}
-		b.WriteString(fmt.Sprintf("  %d (%s): %s (%d)\n", r, ratingLabels[r-1], barColorStyle.Render(bar), count))
-	}
-	b.WriteString("\n")
-
-	b.WriteString(GrayLightStyle.Render("[Press Esc to return to the Deck Manager]"))
-
-	statsBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(GreenColor).
-		Padding(2, 6).
-		Width(54).
-		Align(lipgloss.Left).
-		Render(b.String())
-
-	return AddShadow(statsBox)
 }
