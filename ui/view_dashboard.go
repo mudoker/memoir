@@ -89,16 +89,35 @@ func (m Model) ViewDashboard() string {
 	b.WriteString(statsView + "\n")
 
 	// 4. Console / Help / Status bar
-	if m.UIMode == ModeSearch {
-		b.WriteString(m.SearchInput.View())
-	} else {
-		helpLine := " j/k: Navigation | h/l: Panes | a: Create Deck/Card | e: Edit | dd: Purge | /: Search | : cmd"
-		if m.StatusMsg == "" {
-			b.WriteString(GrayLightStyle.Render(helpLine))
+	var bar strings.Builder
+	var modeBadge string
+	switch m.UIMode {
+	case ModeSearch:
+		modeBadge = AccentSecStyle.Bold(true).Background(GrayMidColor).Render(" SEARCH ")
+	case ModeConsole:
+		modeBadge = YellowStyle.Bold(true).Background(GrayMidColor).Render(" COMMAND ")
+	default:
+		if m.ActivePanel == PanelDecks {
+			modeBadge = AccentStyle.Bold(true).Background(GrayMidColor).Render(" DECKS ")
 		} else {
-			b.WriteString(m.StatusMsg)
+			modeBadge = AccentStyle.Bold(true).Background(GrayMidColor).Render(" CARDS ")
 		}
 	}
+	bar.WriteString(modeBadge + " ")
+
+	if m.UIMode == ModeSearch {
+		bar.WriteString(m.SearchInput.View())
+	} else if m.UIMode == ModeConsole {
+		bar.WriteString(m.ConsoleInput.View())
+	} else {
+		if m.StatusMsg != "" {
+			bar.WriteString(m.StatusMsg)
+		} else {
+			helpLine := "j/k: Navigate • h/l: Panes • a: Add • e: Edit • dd: Delete • /: Search • : Command"
+			bar.WriteString(GrayLightStyle.Render(helpLine))
+		}
+	}
+	b.WriteString(bar.String())
 
 	return b.String()
 }
