@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mattn/go-runewidth"
+
 	"flashtui/db"
 )
 
@@ -51,4 +53,50 @@ func isLastChild(decks []db.Deck, idx int) bool {
 		}
 	}
 	return true
+}
+
+func padRight(s string, width int) string {
+	w := runewidth.StringWidth(s)
+	if w >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-w)
+}
+
+func truncate(s string, width int) string {
+	w := runewidth.StringWidth(s)
+	if w <= width {
+		return s
+	}
+	return runewidth.Truncate(s, width-1, "…")
+}
+
+func HighlightQuery(s string, query string) string {
+	if query == "" {
+		return s
+	}
+	lowerS := strings.ToLower(s)
+	lowerQuery := strings.ToLower(query)
+
+	idx := strings.Index(lowerS, lowerQuery)
+	if idx == -1 {
+		return s
+	}
+
+	var result strings.Builder
+	lastIdx := 0
+	for idx != -1 {
+		result.WriteString(s[lastIdx:idx])
+		match := s[idx : idx+len(query)]
+		result.WriteString(YellowStyle.Render(match))
+		lastIdx = idx + len(query)
+
+		nextIdx := strings.Index(lowerS[lastIdx:], lowerQuery)
+		if nextIdx == -1 {
+			break
+		}
+		idx = lastIdx + nextIdx
+	}
+	result.WriteString(s[lastIdx:])
+	return result.String()
 }

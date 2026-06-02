@@ -124,14 +124,22 @@ func (m Model) ViewDashboard() string {
 			}
 			tagsText := strings.Join(tagStrs, " ")
 
-			if len(frontText) > colFrontW {
-				frontText = frontText[:colFrontW-1] + "…"
-			}
-			if len(tagsText) > colTagsW {
-				tagsText = tagsText[:colTagsW-1] + "…"
-			}
+			// Visual width truncation
+			frontText = truncate(frontText, colFrontW)
+			tagsText = truncate(tagsText, colTagsW)
 
-			row := fmt.Sprintf("%-*s %-*s %-*s %-*s", colIdW, idStr, colFrontW, frontText, colDueW, dueText, colTagsW, tagsText)
+			// Search Query highlights
+			query := m.SearchInput.Value()
+			frontText = HighlightQuery(frontText, query)
+			tagsText = HighlightQuery(tagsText, query)
+
+			// Visual width right-padding
+			frontText = padRight(frontText, colFrontW)
+			dueText = padRight(dueText, colDueW)
+			tagsText = padRight(tagsText, colTagsW)
+			paddedId := padRight(idStr, colIdW)
+
+			row := fmt.Sprintf("%s %s %s %s", paddedId, frontText, dueText, tagsText)
 
 			if isSel {
 				if m.ActivePanel == PanelCards {
