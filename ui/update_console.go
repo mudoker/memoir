@@ -41,7 +41,13 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 		m.SetStatus("Synced all session database states.", false)
 		m.RefreshData()
 
-	case ":q":
+	case ":q", ":q!", ":quit", ":exit":
+		_ = m.Database.Close()
+		return m, tea.Quit
+
+	case ":wq":
+		m.SetStatus("Synced all session database states.", false)
+		m.RefreshData()
 		_ = m.Database.Close()
 		return m, tea.Quit
 
