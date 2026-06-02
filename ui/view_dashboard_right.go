@@ -14,12 +14,22 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 	}
 
 	var cardsStr strings.Builder
-	headerTitle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(WhiteColor).
-		Background(AccentSecColor).
-		Padding(0, 1).
-		Render(" CARDS IN SELECTION ")
+	var headerTitle string
+	if m.ActivePanel == PanelCards && m.UIMode == ModeDashboard {
+		headerTitle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(WhiteColor).
+			Background(AccentSecColor).
+			Padding(0, 1).
+			Render(" ● CARDS IN SELECTION ")
+	} else {
+		headerTitle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(TextColor).
+			Background(GrayMidColor).
+			Padding(0, 1).
+			Render(" ⦾ CARDS IN SELECTION ")
+	}
 	if m.TagFilter != "" {
 		badgeText := fmt.Sprintf(" #%s ", m.TagFilter)
 		headerTitle += " " + AccentSecStyle.Bold(true).Background(GrayMidColor).Render(badgeText)
@@ -31,12 +41,12 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 	colEaseW := 6
 	colRepW := 5
 	colTagsW := 12
-	colFrontW := rightW - 4 - colIdW - colDueW - colEaseW - colRepW - colTagsW - 10
+	colFrontW := rightW - 4 - colIdW - colDueW - colEaseW - colRepW - colTagsW - 15
 	if colFrontW < 10 {
 		colFrontW = 10
 	}
 
-	headerRow := fmt.Sprintf("%s %s %s %s %s %s\n",
+	headerRow := fmt.Sprintf("%s │ %s │ %s │ %s │ %s │ %s\n",
 		padRight("ID", colIdW),
 		padRight("FRONT", colFrontW),
 		padRight("DUE", colDueW),
@@ -100,7 +110,7 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 				coloredDue = GrayLightStyle.Render(paddedDue)
 			}
 
-			row := fmt.Sprintf("%s %s %s %s %s %s", paddedId, coloredFront, coloredDue, paddedEase, paddedRep, coloredTags)
+			row := fmt.Sprintf("%s │ %s │ %s │ %s │ %s │ %s", paddedId, coloredFront, coloredDue, paddedEase, paddedRep, coloredTags)
 
 			if isSel {
 				if m.ActivePanel == PanelCards {

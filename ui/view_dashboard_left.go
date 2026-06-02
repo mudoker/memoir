@@ -14,12 +14,23 @@ func (m Model) renderLeftPanel(leftW, panelH int) string {
 	}
 
 	var decksStr strings.Builder
-	decksStr.WriteString(lipgloss.NewStyle().
-		Bold(true).
-		Foreground(WhiteColor).
-		Background(AccentColor).
-		Padding(0, 1).
-		Render(" DECKS MANAGER ") + "\n\n")
+	var headerTitle string
+	if m.ActivePanel == PanelDecks && m.UIMode == ModeDashboard {
+		headerTitle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(WhiteColor).
+			Background(AccentColor).
+			Padding(0, 1).
+			Render(" ● DECKS MANAGER ")
+	} else {
+		headerTitle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(TextColor).
+			Background(GrayMidColor).
+			Padding(0, 1).
+			Render(" ⦾ DECKS MANAGER ")
+	}
+	decksStr.WriteString(headerTitle + "\n\n")
 
 	if len(m.Decks) == 0 {
 		decksStr.WriteString(" (No decks created)\n Press 'a' to create.")

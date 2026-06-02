@@ -23,18 +23,20 @@ func (m Model) ViewDashboard() string {
 	badgeCards := BadgeCardsStyle.Render(fmt.Sprintf("🗃️ Cards: %d", totalCards))
 	badgeDue := BadgeDueStyle.Render(fmt.Sprintf("⏳ Due: %d", totalDue))
 
-	title := TitleStyle.Render("FlashTUI ─ v1.0.0") + "  " + badgeDecks + " " + badgeCards + " " + badgeDue
-	headerText := fmt.Sprintf(" ╭%s╮\n", strings.Repeat("─", m.Width-2))
+	headerContent := fmt.Sprintf("⚡ %s    %s    %s    %s",
+		TitleStyle.Render("FlashTUI ─ v1.0.0"),
+		badgeDecks,
+		badgeCards,
+		badgeDue,
+	)
 
-	w := lipgloss.Width(title)
-	padding := m.Width - 6 - w
-	if padding < 0 {
-		padding = 0
-	}
-	headerMid := fmt.Sprintf(" │  %s%s │\n", title, strings.Repeat(" ", padding))
-	headerText += headerMid
-	headerText += fmt.Sprintf(" ╰%s╯", strings.Repeat("─", m.Width-2))
-	b.WriteString(headerText + "\n")
+	headerBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(AccentColor).
+		Padding(0, 2).
+		Width(m.Width - 4).
+		Render(headerContent)
+	b.WriteString(headerBox + "\n")
 
 	// 2. Dual Panels (delegated to left/right renderers)
 	leftW := int(float64(m.Width) * 0.3)
