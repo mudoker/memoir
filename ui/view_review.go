@@ -21,7 +21,15 @@ func (m Model) ViewReview() string {
 	var content strings.Builder
 
 	// Title Header
-	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Underline(true).Render(fmt.Sprintf("Reviewing Deck: %s", deck.Name)) + "\n\n")
+	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Underline(true).Render(fmt.Sprintf("Reviewing Deck: %s", deck.Name)) + "\n")
+
+	// Card Metadata Specs
+	metaText := fmt.Sprintf("Card Specs: Ease Factor (%s) • Reps (%s) • Interval (%s)",
+		AccentSecStyle.Bold(true).Render(fmt.Sprintf("%.2f", card.EaseFactor)),
+		AccentStyle.Bold(true).Render(fmt.Sprintf("%d", card.RepetitionCount)),
+		YellowStyle.Bold(true).Render(fmt.Sprintf("%dd", card.Interval)),
+	)
+	content.WriteString(metaText + "\n\n")
 
 	// Header progress bar
 	pct := 0.0
@@ -29,11 +37,11 @@ func (m Model) ViewReview() string {
 		pct = float64(m.Session.CompletedCount) / float64(m.Session.TotalSessionCards)
 	}
 	barStr := renderStyledProgressBar(35, pct)
-	progressText := fmt.Sprintf("Progress: [%s] %d%% (%d/%d)", barStr, int(pct*100), m.Session.CompletedCount, m.Session.TotalSessionCards)
+	progressText := fmt.Sprintf("Progress  : [%s] %d%% (%d/%d)", barStr, int(pct*100), m.Session.CompletedCount, m.Session.TotalSessionCards)
 	content.WriteString(AccentSecStyle.Render(progressText) + "\n")
 
 	// Dynamic queue pool indicators
-	poolsText := fmt.Sprintf("Queue   : Due (%s)  •  Learning (%s)  •  Completed (%s)",
+	poolsText := fmt.Sprintf("Queue     : Due (%s)  •  Learning (%s)  •  Completed (%s)",
 		GreenStyle.Bold(true).Render(fmt.Sprintf("%d", len(m.Session.DueQueue))),
 		YellowStyle.Bold(true).Render(fmt.Sprintf("%d", len(m.Session.LearningQueue))),
 		AccentStyle.Bold(true).Render(fmt.Sprintf("%d", m.Session.CompletedCount)),
@@ -65,6 +73,14 @@ func (m Model) ViewReview() string {
 		content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render("Answer:") + "\n")
 		wrappedBack := lipgloss.NewStyle().Width(m.Width - 16).Render(card.Back)
 		content.WriteString(wrappedBack + "\n\n")
+
+		// Dynamic Button-style confidence ratings
+		btn1 := RedStyle.Background(GrayMidColor).Bold(true).Render(" 1: Forgot ")
+		btn2 := YellowStyle.Background(GrayMidColor).Bold(true).Render(" 2: Hard ")
+		btn3 := AccentSecStyle.Background(GrayMidColor).Bold(true).Render(" 3: Good ")
+		btn4 := GreenStyle.Bold(true).Background(GrayMidColor).Render(" 4: Easy ")
+		btn5 := AccentStyle.Bold(true).Background(GrayMidColor).Render(" 5: Perfect ")
+		content.WriteString(GrayLightStyle.Render("Confidence Rating:") + "\n  " + btn1 + "  " + btn2 + "  " + btn3 + "  " + btn4 + "  " + btn5 + "\n\n")
 	}
 
 	// Build upcoming queue visualizer
@@ -79,9 +95,9 @@ func (m Model) ViewReview() string {
 	// Build Footer
 	var footer string
 	if m.Session.IsFlipped {
-		footer = "[1-5]: Rate performance (1: Forgot, 2: Hard, 3: Good, 4: Easy, 5: Perfect) | u: Undo | Esc: Exit"
+		footer = "[1-5]: Select rating  •  u: Undo last card  •  Esc: Exit study session"
 	} else {
-		footer = "[Space]: Flip Card Back | h: Reveal Hint | s: Shuffle Queue | Esc: Exit"
+		footer = "[Space]: Reveal Answer  •  h: Peek Hint  •  s: Shuffle Queue  •  Esc: Exit"
 	}
 	content.WriteString(GrayLightStyle.Render(footer))
 
