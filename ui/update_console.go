@@ -131,6 +131,9 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 			m.SetStatus(fmt.Sprintf("Successfully exported '%s' to '%s'.", deckName, path), false)
 		}
 
+	case ":help", ":h":
+		m.SetStatus("Commands: :w[!] (save) • :q[!]/:quit[!]/:exit[!] (exit) • :wq[!]/:x[!] (save & exit) • :tag <tag> • :tags • :import <path> • :export <deck> <path>", false)
+
 	default:
 		m.SetStatus("Unknown command: "+op, true)
 	}
