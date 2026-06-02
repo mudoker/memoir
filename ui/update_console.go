@@ -64,6 +64,35 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 			m.RefreshData()
 		}
 
+	case ":tag":
+		if len(parts) < 2 {
+			m.TagFilter = ""
+			m.SetStatus("Cleared tag filter.", false)
+		} else {
+			m.TagFilter = parts[1]
+			m.SetStatus(fmt.Sprintf("Filtering cards by tag: #%s", m.TagFilter), false)
+		}
+		m.RefreshData()
+
+	case ":tags":
+		tagMap := make(map[string]bool)
+		for _, c := range m.Cards {
+			for _, t := range c.Tags {
+				if t != "" {
+					tagMap[t] = true
+				}
+			}
+		}
+		if len(tagMap) == 0 {
+			m.SetStatus("No tags found in the current deck.", false)
+		} else {
+			var tags []string
+			for t := range tagMap {
+				tags = append(tags, "#"+t)
+			}
+			m.SetStatus(fmt.Sprintf("Available tags in deck: %s", strings.Join(tags, ", ")), false)
+		}
+
 	case ":export":
 		if len(parts) < 3 {
 			m.SetStatus("Usage: :export <deck_name> <path>", true)
