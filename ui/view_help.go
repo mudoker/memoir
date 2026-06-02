@@ -28,6 +28,7 @@ func (m Model) ViewHelpPanel() string {
 	b.WriteString("  :w         : Sync session database changes\n")
 	b.WriteString("  :q / :q!   : Safe exit / force exit\n")
 	b.WriteString("  :wq / :x   : Save changes and exit\n")
+	b.WriteString("  :theme <n> : Change theme (catppuccin, tokyonight, gruvbox, etc.)\n")
 	b.WriteString("  :tag <tag> : Filter cards list by specific tag\n")
 	b.WriteString("  :tags      : List all unique tags in current deck\n")
 	b.WriteString("  :import <p>: Parse cards from external Markdown file\n")

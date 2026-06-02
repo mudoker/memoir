@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	DatabasePath string `yaml:"database_path"`
+	ThemeName    string `yaml:"theme_name"`
 	Theme        Theme  `yaml:"theme"`
 }
 
@@ -22,11 +23,12 @@ type Theme struct {
 func DefaultConfig() Config {
 	return Config{
 		DatabasePath: "", // Will be filled with default ~/.config/flashtui/data.db
+		ThemeName:    "catppuccin",
 		Theme: Theme{
-			PrimaryColor:    "#875faf", // Purple/Violet accent
-			SecondaryColor:  "#0087af", // Deep Cyan/Teal accent
-			BackgroundColor: "#1c1c1c", // Sleek dark gray
-			TextColor:       "#bcbcbc", // Off-white
+			PrimaryColor:    "#cba6f7", // Mauve
+			SecondaryColor:  "#89b4fa", // Blue
+			BackgroundColor: "#1e1e2e", // Mocha base
+			TextColor:       "#cdd6f4", // Text
 		},
 	}
 }
@@ -69,6 +71,9 @@ func LoadConfig() (Config, error) {
 	if fileCfg.DatabasePath != "" {
 		cfg.DatabasePath = fileCfg.DatabasePath
 	}
+	if fileCfg.ThemeName != "" {
+		cfg.ThemeName = fileCfg.ThemeName
+	}
 	if fileCfg.Theme.PrimaryColor != "" {
 		cfg.Theme.PrimaryColor = fileCfg.Theme.PrimaryColor
 	}
@@ -83,4 +88,20 @@ func LoadConfig() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func SaveConfig(cfg Config) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	configDir := filepath.Join(home, ".config", "flashtui")
+	configPath := filepath.Join(configDir, "config.yaml")
+
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0644)
 }

@@ -1,6 +1,10 @@
 package ui
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+
+	"flashtui/config"
+)
 
 // Palette colors
 var (
@@ -83,3 +87,70 @@ var (
 			Background(GreenColor).
 			Padding(0, 1)
 )
+
+func InitStyles(theme config.Theme) {
+	AccentColor = lipgloss.Color(theme.PrimaryColor)
+	AccentSecColor = lipgloss.Color(theme.SecondaryColor)
+	GrayDarkColor = lipgloss.Color(theme.BackgroundColor)
+	TextColor = lipgloss.Color(theme.TextColor)
+
+	RedStyle = lipgloss.NewStyle().Foreground(RedColor)
+	GreenStyle = lipgloss.NewStyle().Foreground(GreenColor)
+	YellowStyle = lipgloss.NewStyle().Foreground(YellowColor)
+	GrayLightStyle = lipgloss.NewStyle().Foreground(GrayLightColor)
+	AccentStyle = lipgloss.NewStyle().Foreground(AccentColor)
+	AccentSecStyle = lipgloss.NewStyle().Foreground(AccentSecColor)
+
+	LeechStyle = lipgloss.NewStyle().
+		Foreground(WhiteColor).
+		Background(RedColor).
+		Padding(0, 1).
+		Bold(true)
+
+	TitleStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(WhiteColor).
+		Background(AccentColor).
+		Padding(0, 2)
+
+	ActiveBorderColor = AccentColor
+	InactiveBorderColor = GrayMidColor
+
+	PanelStyle = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(InactiveBorderColor).
+		Padding(1, 2)
+
+	ActivePanelStyle = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ActiveBorderColor).
+		Padding(1, 2)
+
+	CursorStyle = lipgloss.NewStyle().
+		Foreground(WhiteColor).
+		Background(AccentColor).
+		Bold(true)
+
+	StatsStyle = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(AccentSecColor).
+		Padding(1, 2)
+
+	BadgeDecksStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(WhiteColor).
+		Background(AccentColor).
+		Padding(0, 1)
+
+	BadgeCardsStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(WhiteColor).
+		Background(AccentSecColor).
+		Padding(0, 1)
+
+	BadgeDueStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(GrayDarkColor).
+		Background(GreenColor).
+		Padding(0, 1)
+}

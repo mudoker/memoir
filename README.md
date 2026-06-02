@@ -64,6 +64,7 @@ The application will automatically initialize the base configuration at `~/.conf
 - `:q` : Safely close SQLite and quit.
 - `:tag <tag_name>` : Filter card selections by a specific tag. Run `:tag` with no arguments to clear the filter.
 - `:tags` : Display a list of all unique tags present in the current deck.
+- `:theme <name>` : Switch the TUI color theme dynamically. Available themes: `catppuccin`, `tokyonight`, `gruvbox`, `nord`, `monokai`. Run `:theme` with no arguments to see the usage list.
 - `:import <path>` : Parse cards from external Markdown file (headers = front, comment blocks = hints/tags).
 - `:export <deck_name> <path>` : Compile deck tree and cards recursively to JSON file.
 - `:help` / `:h` : Display list of all available console commands.

@@ -131,6 +131,23 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 			m.SetStatus(fmt.Sprintf("Successfully exported '%s' to '%s'.", deckName, path), false)
 		}
 
+	case ":theme":
+		if len(parts) < 2 {
+			var themeNames []string
+			for t := range Themes {
+				themeNames = append(themeNames, t)
+			}
+			m.SetStatus(fmt.Sprintf("Usage: :theme <name> (available: %s) [current: %s]", strings.Join(themeNames, ", "), m.Config.ThemeName), false)
+		} else {
+			name := strings.ToLower(parts[1])
+			if m.ApplyTheme(name) {
+				m.SetStatus(fmt.Sprintf("Theme changed to '%s'.", name), false)
+				m.RefreshData()
+			} else {
+				m.SetStatus(fmt.Sprintf("Theme '%s' not found.", name), true)
+			}
+		}
+
 	case ":help", ":h":
 		m.UIMode = ModeHelp
 		m.SetStatus("Opened help panel.", false)

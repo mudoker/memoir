@@ -114,6 +114,7 @@ func NewModel(database *db.DB, cfg config.Config) Model {
 		FormCardTags:  formCardTags,
 	}
 
+	InitStyles(cfg.Theme)
 	m.RefreshData()
 	return m
 }
