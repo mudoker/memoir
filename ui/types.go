@@ -79,23 +79,23 @@ func NewModel(database *db.DB, cfg config.Config) Model {
 	searchInput.CharLimit = 50
 
 	formDeckName := textinput.New()
-	formDeckName.Prompt = "Deck Name: "
+	formDeckName.Prompt = ""
 	formDeckName.CharLimit = 50
 
 	formCardFront := textinput.New()
-	formCardFront.Prompt = "Front: "
+	formCardFront.Prompt = ""
 	formCardFront.CharLimit = 200
 
 	formCardBack := textinput.New()
-	formCardBack.Prompt = "Back: "
+	formCardBack.Prompt = ""
 	formCardBack.CharLimit = 500
 
 	formCardHint := textinput.New()
-	formCardHint.Prompt = "Hint (Optional): "
+	formCardHint.Prompt = ""
 	formCardHint.CharLimit = 200
 
 	formCardTags := textinput.New()
-	formCardTags.Prompt = "Tags (comma-separated): "
+	formCardTags.Prompt = ""
 	formCardTags.CharLimit = 100
 
 	m := Model{

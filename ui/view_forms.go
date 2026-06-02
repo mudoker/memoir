@@ -15,7 +15,9 @@ func (m Model) ViewFormDeck() string {
 
 	var content strings.Builder
 	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Underline(true).Render(title) + "\n\n")
-	content.WriteString(m.FormDeckName.View() + "\n\n")
+	
+	label := AccentStyle.Bold(true).Render("❯ ") + lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render("Name: ")
+	content.WriteString(label + m.FormDeckName.View() + "\n\n")
 	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Enter] Confirm  |  [Esc] Cancel"))
 
 	formBox := lipgloss.NewStyle().
@@ -39,28 +41,36 @@ func (m Model) ViewFormCard() string {
 
 	fields := []string{"Front", "Back", "Hint", "Tags"}
 	for i, name := range fields {
+		isActive := m.FormActiveField == i
 		var activeIndicator string
+		if isActive {
+			activeIndicator = AccentStyle.Bold(true).Render("❯ ")
+		} else {
+			activeIndicator = "  "
+		}
+
 		var viewStr string
 		switch i {
 		case 0:
 			viewStr = m.FormCardFront.View()
-			activeIndicator = getActiveIndicator(m.FormActiveField == 0)
 		case 1:
 			viewStr = m.FormCardBack.View()
-			activeIndicator = getActiveIndicator(m.FormActiveField == 1)
 		case 2:
 			viewStr = m.FormCardHint.View()
-			activeIndicator = getActiveIndicator(m.FormActiveField == 2)
 		case 3:
 			viewStr = m.FormCardTags.View()
-			activeIndicator = getActiveIndicator(m.FormActiveField == 3)
 		}
 
-		label := fmt.Sprintf("%s %-6s: ", activeIndicator, name)
+		var label string
+		if isActive {
+			label = fmt.Sprintf("%s%s: ", activeIndicator, lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render(fmt.Sprintf("%-6s", name)))
+		} else {
+			label = fmt.Sprintf("%s%s: ", activeIndicator, GrayLightStyle.Render(fmt.Sprintf("%-6s", name)))
+		}
 		content.WriteString(label + viewStr + "\n\n")
 	}
 
-	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Tab] Cycle Fields  |  [Enter] Save  |  [Esc] Cancel"))
+	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Tab] Cycle Fields  •  [Enter] Save  •  [Esc] Cancel"))
 
 	formBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -70,11 +80,4 @@ func (m Model) ViewFormCard() string {
 		Render(content.String())
 
 	return AddShadow(formBox)
-}
-
-func getActiveIndicator(isActive bool) string {
-	if isActive {
-		return "❯"
-	}
-	return " "
 }
