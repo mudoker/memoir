@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+
+	"flashtui/db"
 )
 
 func (m Model) ViewDashboard() string {

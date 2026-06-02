@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"flashtui/db"
 )
 
 func (m Model) UpdateConsole(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
