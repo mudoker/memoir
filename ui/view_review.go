@@ -28,9 +28,17 @@ func (m Model) ViewReview() string {
 	if m.Session.TotalSessionCards > 0 {
 		pct = float64(m.Session.CompletedCount) / float64(m.Session.TotalSessionCards)
 	}
-	barStr := renderProgressBar(35, pct)
-	progressText := fmt.Sprintf("Queue Progress: [%s] %d%% (%d/%d)", barStr, int(pct*100), m.Session.CompletedCount, m.Session.TotalSessionCards)
-	content.WriteString(AccentSecStyle.Render(progressText) + "\n\n")
+	barStr := renderStyledProgressBar(35, pct)
+	progressText := fmt.Sprintf("Progress: [%s] %d%% (%d/%d)", barStr, int(pct*100), m.Session.CompletedCount, m.Session.TotalSessionCards)
+	content.WriteString(AccentSecStyle.Render(progressText) + "\n")
+
+	// Dynamic queue pool indicators
+	poolsText := fmt.Sprintf("Queue   : Due (%s)  •  Learning (%s)  •  Completed (%s)",
+		GreenStyle.Bold(true).Render(fmt.Sprintf("%d", len(m.Session.DueQueue))),
+		YellowStyle.Bold(true).Render(fmt.Sprintf("%d", len(m.Session.LearningQueue))),
+		AccentStyle.Bold(true).Render(fmt.Sprintf("%d", m.Session.CompletedCount)),
+	)
+	content.WriteString(poolsText + "\n\n")
 
 	// Sticky card indicator
 	if m.Session.IsLeech(card.ID) {
