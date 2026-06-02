@@ -54,5 +54,7 @@ The application will automatically initialize the base configuration at `~/.conf
 ### Console Commands (`:`)
 - `:w` : Force database sync update.
 - `:q` : Safely close SQLite and quit.
+- `:tag <tag_name>` : Filter card selections by a specific tag. Run `:tag` with no arguments to clear the filter.
+- `:tags` : Display a list of all unique tags present in the current deck.
 - `:import <path>` : Parse cards from external Markdown file (headers = front, comment blocks = hints/tags).
 - `:export <deck_name> <path>` : Compile deck tree and cards recursively to JSON file.
