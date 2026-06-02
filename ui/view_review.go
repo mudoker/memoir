@@ -13,88 +13,116 @@ func (m Model) ViewReview() string {
 	}
 
 	if m.Session.ActiveCard == nil {
-		var b strings.Builder
-		b.WriteString("╭──────────────────────────────────────────────────────────╮\n")
-		b.WriteString("│                                                          │\n")
-		b.WriteString("│                  🎉 SESSION COMPLETED!                   │\n")
-		b.WriteString("│                                                          │\n")
-		b.WriteString("│        You have successfully reviewed all due cards.     │\n")
-		b.WriteString("│                                                          │\n")
-		b.WriteString("│        [Press Esc to return to the Deck Manager]        │\n")
-		b.WriteString("│                                                          │\n")
-		b.WriteString("╰──────────────────────────────────────────────────────────╯")
-		return b.String()
+		return m.viewSessionStatistics()
 	}
 
 	card := m.Session.ActiveCard
 	deck := m.Decks[m.SelectedDeckIdx]
+	var content strings.Builder
 
-	var b strings.Builder
+	// Title Header
+	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Underline(true).Render(fmt.Sprintf("Reviewing Deck: %s", deck.Name)) + "\n\n")
 
+	// Header progress bar
 	pct := 0.0
 	if m.Session.TotalSessionCards > 0 {
 		pct = float64(m.Session.CompletedCount) / float64(m.Session.TotalSessionCards)
 	}
-	barStr := renderProgressBar(40, pct)
+	barStr := renderProgressBar(35, pct)
 	progressText := fmt.Sprintf("Queue Progress: [%s] %d%% (%d/%d)", barStr, int(pct*100), m.Session.CompletedCount, m.Session.TotalSessionCards)
+	content.WriteString(AccentSecStyle.Render(progressText) + "\n\n")
 
-	title := fmt.Sprintf(" Reviewing: %s ", deck.Name)
-	boxW := m.Width - 10
-	if boxW > 85 {
-		boxW = 85
-	}
-
-	b.WriteString(fmt.Sprintf("╭─%s%s─╮\n", title, strings.Repeat("─", boxW-len(title)-4)))
-	b.WriteString(fmt.Sprintf("│  %-*s  │\n", boxW-6, progressText))
-	b.WriteString(fmt.Sprintf("├%s┤\n", strings.Repeat("─", boxW-2)))
-	b.WriteString("│                                                                              │\n")
-
-	contentW := boxW - 8
-	frontStyle := lipgloss.NewStyle().Width(contentW).Align(lipgloss.Left)
-
-	// Leech Warning indicator
+	// Sticky card indicator
 	if m.Session.IsLeech(card.ID) {
-		leechLabel := LeechStyle.Render("🔥 STICKY LEECH CARD")
-		b.WriteString(fmt.Sprintf("│  %-*s  │\n", boxW-6, leechLabel))
-		b.WriteString("│                                                                              │\n")
+		content.WriteString(LeechStyle.Render("🔥 STICKY LEECH CARD (Review Lapses: 3+)") + "\n\n")
 	}
 
-	b.WriteString(fmt.Sprintf("│  %s  │\n", lipgloss.NewStyle().Bold(true).Render("Question:")))
-	wrappedFront := frontStyle.Render(card.Front)
-	for _, line := range strings.Split(wrappedFront, "\n") {
-		b.WriteString(fmt.Sprintf("│    %-*s  │\n", boxW-8, line))
-	}
-	b.WriteString("│                                                                              │\n")
+	// Question Section
+	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render("Question:") + "\n")
+	wrappedFront := lipgloss.NewStyle().Width(m.Width - 16).Render(card.Front)
+	content.WriteString(wrappedFront + "\n\n")
 
+	// Hint Section
 	if card.Hint != "" {
 		if m.Session.ShowHint {
-			b.WriteString(fmt.Sprintf("│  %s  │\n", YellowStyle.Render("Hint: "+card.Hint)))
+			content.WriteString(YellowStyle.Render("Hint: "+card.Hint) + "\n\n")
 		} else {
-			b.WriteString(fmt.Sprintf("│  %s  │\n", GrayLightStyle.Render("[Hint Available: Press 'h' to peek]")))
+			content.WriteString(GrayLightStyle.Render("[Hint Available: Press 'h' to peek]") + "\n\n")
 		}
-		b.WriteString("│                                                                              │\n")
 	}
 
+	// Context Divider & Answer Section
 	if m.Session.IsFlipped {
-		b.WriteString(fmt.Sprintf("├%s┤\n", strings.Repeat("─", boxW-2)))
-		b.WriteString("│                                                                              │\n")
-		b.WriteString(fmt.Sprintf("│  %s  │\n", lipgloss.NewStyle().Bold(true).Render("Answer:")))
-		wrappedBack := frontStyle.Render(card.Back)
-		for _, line := range strings.Split(wrappedBack, "\n") {
-			b.WriteString(fmt.Sprintf("│    %-*s  │\n", boxW-8, line))
-		}
-		b.WriteString("│                                                                              │\n")
+		content.WriteString(lipgloss.NewStyle().Foreground(GrayMidColor).Render(strings.Repeat("─", m.Width-16)) + "\n\n")
+		content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render("Answer:") + "\n")
+		wrappedBack := lipgloss.NewStyle().Width(m.Width - 16).Render(card.Back)
+		content.WriteString(wrappedBack + "\n\n")
 	}
 
-	b.WriteString(fmt.Sprintf("╰%s╯\n", strings.Repeat("─", boxW-2)))
-
+	// Build Footer
 	var footer string
 	if m.Session.IsFlipped {
-		footer = " [1-5]: Rate performance (1: Forgot, 2: Hard, 3: Good, 4: Easy, 5: Perfect) | u: Undo | Esc: Exit"
+		footer = "[1-5]: Rate performance (1: Forgot, 2: Hard, 3: Good, 4: Easy, 5: Perfect) | u: Undo | Esc: Exit"
 	} else {
-		footer = " [Space]: Flip Card Back | h: Reveal Hint | s: Shuffle Queue | Esc: Exit"
+		footer = "[Space]: Flip Card Back | h: Reveal Hint | s: Shuffle Queue | Esc: Exit"
 	}
-	b.WriteString(GrayLightStyle.Render(footer))
+	content.WriteString(GrayLightStyle.Render(footer))
 
-	return b.String()
+	reviewBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(AccentColor).
+		Padding(1, 4).
+		Width(m.Width - 8).
+		Render(content.String())
+
+	return reviewBox
+}
+
+func (m Model) viewSessionStatistics() string {
+	var b strings.Builder
+	b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(GreenColor).Underline(true).Render("🎉 STUDY SESSION COMPLETED!") + "\n\n")
+
+	// Compute session stats
+	totalReviews := len(m.Session.Ratings)
+	successReviews := 0
+	sumRatings := 0
+	for _, r := range m.Session.Ratings {
+		sumRatings += r
+		if r >= 3 {
+			successReviews++
+		}
+	}
+
+	accuracy := 0.0
+	avgScore := 0.0
+	if totalReviews > 0 {
+		accuracy = (float64(successReviews) / float64(totalReviews)) * 100
+		avgScore = float64(sumRatings) / float64(totalReviews)
+	}
+
+	uniqueLapses := 0
+	for _, count := range m.Session.Lapses {
+		if count > 0 {
+			uniqueLapses++
+		}
+	}
+
+	streak, _ := m.Database.GetDailyStreak()
+
+	b.WriteString(fmt.Sprintf("Graduated Cards  : %s\n", GreenStyle.Render(fmt.Sprintf("%d/%d", m.Session.CompletedCount, m.Session.TotalSessionCards))))
+	b.WriteString(fmt.Sprintf("Total Reviews    : %d attempts\n", totalReviews))
+	b.WriteString(fmt.Sprintf("Session Accuracy : %.1f%%\n", accuracy))
+	b.WriteString(fmt.Sprintf("Average Rating   : %.2f / 5.0\n", avgScore))
+	b.WriteString(fmt.Sprintf("Lapsed Cards     : %d\n", uniqueLapses))
+	b.WriteString(fmt.Sprintf("Current Streak   : 🔥 %d Days\n\n", streak))
+
+	b.WriteString(GrayLightStyle.Render("[Press Esc to return to the Deck Manager]"))
+
+	return lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(GreenColor).
+		Padding(2, 6).
+		Width(54).
+		Align(lipgloss.Left).
+		Render(b.String())
 }

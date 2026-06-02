@@ -13,18 +13,19 @@ func (m Model) ViewFormDeck() string {
 		title = "RENAME DECK"
 	}
 
-	var b strings.Builder
-	b.WriteString(fmt.Sprintf("╭%s╮\n", strings.Repeat("─", 50)))
-	b.WriteString(fmt.Sprintf("│ %-*s │\n", 48, lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render(title)))
-	b.WriteString(fmt.Sprintf("├%s┤\n", strings.Repeat("─", 50)))
-	b.WriteString("│                                                  │\n")
-	b.WriteString(fmt.Sprintf("│  %s │\n", m.FormDeckName.View()))
-	b.WriteString("│                                                  │\n")
-	b.WriteString(fmt.Sprintf("├%s┤\n", strings.Repeat("─", 50)))
-	b.WriteString("│  [Enter] Confirm  |  [Esc] Cancel                │\n")
-	b.WriteString(fmt.Sprintf("╰%s╯", strings.Repeat("─", 50)))
+	var content strings.Builder
+	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Underline(true).Render(title) + "\n\n")
+	content.WriteString(m.FormDeckName.View() + "\n\n")
+	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Enter] Confirm  |  [Esc] Cancel"))
 
-	return b.String()
+	formBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(AccentColor).
+		Padding(1, 4).
+		Width(50).
+		Render(content.String())
+
+	return formBox
 }
 
 func (m Model) ViewFormCard() string {
@@ -33,11 +34,8 @@ func (m Model) ViewFormCard() string {
 		title = "EDIT CARD"
 	}
 
-	var b strings.Builder
-	b.WriteString(fmt.Sprintf("╭%s╮\n", strings.Repeat("─", 70)))
-	b.WriteString(fmt.Sprintf("│ %-*s │\n", 68, lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render(title)))
-	b.WriteString(fmt.Sprintf("├%s┤\n", strings.Repeat("─", 70)))
-	b.WriteString("│                                                                    │\n")
+	var content strings.Builder
+	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Underline(true).Render(title) + "\n\n")
 
 	fields := []string{"Front", "Back", "Hint", "Tags"}
 	for i, name := range fields {
@@ -58,20 +56,25 @@ func (m Model) ViewFormCard() string {
 			activeIndicator = getActiveIndicator(m.FormActiveField == 3)
 		}
 
-		b.WriteString(fmt.Sprintf("│ %s %-6s : %-56s │\n", activeIndicator, name, viewStr))
-		b.WriteString("│                                                                    │\n")
+		label := fmt.Sprintf("%s %-6s: ", activeIndicator, name)
+		content.WriteString(label + viewStr + "\n\n")
 	}
 
-	b.WriteString(fmt.Sprintf("├%s┤\n", strings.Repeat("─", 70)))
-	b.WriteString("│  [Tab] Cycle Fields  |  [Enter] Save  |  [Esc] Cancel              │\n")
-	b.WriteString(fmt.Sprintf("╰%s╯", strings.Repeat("─", 70)))
+	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Tab] Cycle Fields  |  [Enter] Save  |  [Esc] Cancel"))
 
-	return b.String()
+	formBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(AccentColor).
+		Padding(1, 4).
+		Width(72).
+		Render(content.String())
+
+	return formBox
 }
 
 func getActiveIndicator(isActive bool) string {
 	if isActive {
-		return "▶"
+		return "❯"
 	}
 	return " "
 }
