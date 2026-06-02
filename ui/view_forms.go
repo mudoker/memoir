@@ -25,7 +25,7 @@ func (m Model) ViewFormDeck() string {
 		Width(50).
 		Render(content.String())
 
-	return formBox
+	return AddShadow(formBox)
 }
 
 func (m Model) ViewFormCard() string {
@@ -69,7 +69,7 @@ func (m Model) ViewFormCard() string {
 		Width(72).
 		Render(content.String())
 
-	return formBox
+	return AddShadow(formBox)
 }
 
 func getActiveIndicator(isActive bool) string {

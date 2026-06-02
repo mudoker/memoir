@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
 
 	"flashtui/db"
@@ -99,4 +100,24 @@ func HighlightQuery(s string, query string) string {
 	}
 	result.WriteString(s[lastIdx:])
 	return result.String()
+}
+
+func AddShadow(box string) string {
+	lines := strings.Split(box, "\n")
+	if len(lines) == 0 {
+		return box
+	}
+	var result []string
+	for i, line := range lines {
+		if i == 0 {
+			result = append(result, line)
+		} else {
+			result = append(result, line+"░")
+		}
+	}
+	width := lipgloss.Width(lines[0])
+	if width > 1 {
+		result = append(result, " "+strings.Repeat("░", width-1))
+	}
+	return strings.Join(result, "\n")
 }

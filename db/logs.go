@@ -123,3 +123,20 @@ func (db *DB) GetMasteryStats() (int, int, error) {
 	}
 	return total, mastered, nil
 }
+
+func (db *DB) GetLast7DaysActivity() ([]int, error) {
+	now := time.Now().Local()
+	activity := make([]int, 7)
+	for i := 0; i < 7; i++ {
+		day := now.AddDate(0, 0, -6+i)
+		startOfDay := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, day.Location()).Unix()
+		endOfDay := time.Date(day.Year(), day.Month(), day.Day(), 23, 59, 59, 999999999, day.Location()).Unix()
+
+		var count int
+		err := db.Conn.QueryRow("SELECT COUNT(*) FROM review_logs WHERE reviewed_at >= ? AND reviewed_at <= ?", startOfDay, endOfDay).Scan(&count)
+		if err == nil {
+			activity[i] = count
+		}
+	}
+	return activity, nil
+}

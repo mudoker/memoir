@@ -59,6 +59,15 @@ func (m Model) ViewReview() string {
 		content.WriteString(wrappedBack + "\n\n")
 	}
 
+	// Build upcoming queue visualizer
+	var upcoming []string
+	for i := 0; i < 3 && i < len(m.Session.DueQueue); i++ {
+		upcoming = append(upcoming, truncate(m.Session.DueQueue[i].Front, 15))
+	}
+	if len(upcoming) > 0 {
+		content.WriteString(GrayLightStyle.Render("➔ Next: " + strings.Join(upcoming, " ➔ ")) + "\n\n")
+	}
+
 	// Build Footer
 	var footer string
 	if m.Session.IsFlipped {
@@ -75,7 +84,7 @@ func (m Model) ViewReview() string {
 		Width(m.Width - 8).
 		Render(content.String())
 
-	return reviewBox
+	return AddShadow(reviewBox)
 }
 
 func (m Model) viewSessionStatistics() string {
@@ -118,11 +127,13 @@ func (m Model) viewSessionStatistics() string {
 
 	b.WriteString(GrayLightStyle.Render("[Press Esc to return to the Deck Manager]"))
 
-	return lipgloss.NewStyle().
+	statsBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(GreenColor).
 		Padding(2, 6).
 		Width(54).
 		Align(lipgloss.Left).
 		Render(b.String())
+
+	return AddShadow(statsBox)
 }

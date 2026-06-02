@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -11,169 +10,85 @@ import (
 func (m Model) ViewDashboard() string {
 	var b strings.Builder
 
-	// 1. Header
-	title := TitleStyle.Render(fmt.Sprintf("FlashTUI ─ v1.0.0 (Local Time: %s)", time.Now().Format("15:04:05")))
+	// 1. Header with stats badges
+	totalDue := 0
+	for _, d := range m.Decks {
+		if d.ParentID == nil {
+			totalDue += d.DueCount
+		}
+	}
+	totalCards, mastered, _ := m.Database.GetMasteryStats()
+
+	badgeDecks := AccentStyle.Render(fmt.Sprintf(" 📂 Decks: %d ", len(m.Decks)))
+	badgeCards := AccentSecStyle.Render(fmt.Sprintf(" 🗃️ Cards: %d ", totalCards))
+	badgeDue := GreenStyle.Render(fmt.Sprintf(" ⏳ Due: %d ", totalDue))
+
+	title := TitleStyle.Render(" FlashTUI ─ v1.0.0 ") + "  " + badgeDecks + " " + badgeCards + " " + badgeDue
 	headerText := fmt.Sprintf(" ╭%s╮\n", strings.Repeat("─", m.Width-2))
-	headerMid := fmt.Sprintf(" │  %-*s │\n", m.Width-6, title)
+
+	w := lipgloss.Width(title)
+	padding := m.Width - 6 - w
+	if padding < 0 {
+		padding = 0
+	}
+	headerMid := fmt.Sprintf(" │  %s%s │\n", title, strings.Repeat(" ", padding))
 	headerText += headerMid
 	headerText += fmt.Sprintf(" ╰%s╯", strings.Repeat("─", m.Width-2))
 	b.WriteString(headerText + "\n")
 
-	// 2. Dual Panels
+	// 2. Dual Panels (delegated to left/right renderers)
 	leftW := int(float64(m.Width) * 0.3)
 	rightW := m.Width - leftW - 2
 	panelH := m.Height - 11
 
-	leftStyle := PanelStyle.Width(leftW - 4).Height(panelH)
-	if m.ActivePanel == PanelDecks && m.UIMode == ModeDashboard {
-		leftStyle = ActivePanelStyle.Width(leftW - 4).Height(panelH)
-	}
-
-	var decksStr strings.Builder
-	decksStr.WriteString(lipgloss.NewStyle().Bold(true).Underline(true).Render("DECKS MANAGER (Normal Mode)") + "\n\n")
-
-	if len(m.Decks) == 0 {
-		decksStr.WriteString(" (No decks created)\n Press 'a' to create.")
-	} else {
-		visibleHeight := panelH - 2
-		start := m.DeckScrollOffset
-		end := start + visibleHeight
-		if end > len(m.Decks) {
-			end = len(m.Decks)
-		}
-
-		for idx := start; idx < end; idx++ {
-			d := m.Decks[idx]
-			isSel := m.SelectedDeckIdx == idx
-			nameText := d.Name
-			badge := fmt.Sprintf("[%d]", d.DueCount)
-			if d.DueCount > 0 {
-				badge = GreenStyle.Render(badge)
-			} else {
-				badge = GrayLightStyle.Render(badge)
-			}
-
-			if isSel {
-				if m.ActivePanel == PanelDecks {
-					nameText = CursorStyle.Render(nameText)
-				} else {
-					nameText = lipgloss.NewStyle().Foreground(AccentColor).Bold(true).Render(nameText)
-				}
-			}
-
-			prefix := ""
-			if d.Depth > 0 {
-				prefix = strings.Repeat("│   ", d.Depth-1)
-				if isLastChild(m.Decks, idx) {
-					prefix += "└── "
-				} else {
-					prefix += "├── "
-				}
-			}
-
-			if isSel {
-				decksStr.WriteString(fmt.Sprintf(" ▶  %s%s %s\n", prefix, nameText, badge))
-			} else {
-				decksStr.WriteString(fmt.Sprintf("    %s%s %s\n", prefix, nameText, badge))
-			}
-		}
-	}
-	leftView := leftStyle.Render(decksStr.String())
-
-	rightStyle := PanelStyle.Width(rightW - 4).Height(panelH)
-	if m.ActivePanel == PanelCards && m.UIMode == ModeDashboard {
-		rightStyle = ActivePanelStyle.Width(rightW - 4).Height(panelH)
-	}
-
-	var cardsStr strings.Builder
-	cardsStr.WriteString(lipgloss.NewStyle().Bold(true).Underline(true).Render("CARDS IN SELECTION") + "\n\n")
-
-	colIdW := 6
-	colDueW := 12
-	colTagsW := 15
-	colFrontW := rightW - 4 - colIdW - colDueW - colTagsW - 8
-	if colFrontW < 10 {
-		colFrontW = 10
-	}
-
-	headerRow := fmt.Sprintf("%-*s %-*s %-*s %-*s\n", colIdW, "ID", colFrontW, "FRONT", colDueW, "DUE", colTagsW, "TAGS")
-	cardsStr.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render(headerRow))
-
-	if len(m.FilteredCards) == 0 {
-		cardsStr.WriteString("\n (No cards matching filter/selection)\n Press 'a' to add a card.")
-	} else {
-		visibleHeight := panelH - 3
-		start := m.CardScrollOffset
-		end := start + visibleHeight
-		if end > len(m.FilteredCards) {
-			end = len(m.FilteredCards)
-		}
-
-		for idx := start; idx < end; idx++ {
-			c := m.FilteredCards[idx]
-			isSel := m.SelectedCardIdx == idx
-			idStr := fmt.Sprintf("%03d", c.ID)
-			frontText := c.Front
-			dueText := formatDue(c.DueAt)
-
-			var tagStrs []string
-			for _, t := range c.Tags {
-				if t != "" {
-					tagStrs = append(tagStrs, "#"+t)
-				}
-			}
-			tagsText := strings.Join(tagStrs, " ")
-
-			// Visual width truncation
-			frontText = truncate(frontText, colFrontW)
-			tagsText = truncate(tagsText, colTagsW)
-
-			// Search Query highlights
-			query := m.SearchInput.Value()
-			frontText = HighlightQuery(frontText, query)
-			tagsText = HighlightQuery(tagsText, query)
-
-			// Visual width right-padding
-			frontText = padRight(frontText, colFrontW)
-			dueText = padRight(dueText, colDueW)
-			tagsText = padRight(tagsText, colTagsW)
-			paddedId := padRight(idStr, colIdW)
-
-			row := fmt.Sprintf("%s %s %s %s", paddedId, frontText, dueText, tagsText)
-
-			if isSel {
-				if m.ActivePanel == PanelCards {
-					cardsStr.WriteString(CursorStyle.Render(row) + "\n")
-				} else {
-					cardsStr.WriteString(AccentStyle.Render(row) + "\n")
-				}
-			} else {
-				cardsStr.WriteString(row + "\n")
-			}
-		}
-	}
-	rightView := rightStyle.Render(cardsStr.String())
+	leftView := m.renderLeftPanel(leftW, panelH)
+	rightView := m.renderRightPanel(rightW, panelH)
 
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, leftView, rightView) + "\n")
 
+	// 3. Stats Panel with Weekly Activity Grid
 	streak, _ := m.Database.GetDailyStreak()
 	ret, _ := m.Database.GetRetentionAccuracy()
-	totalCards, mastered, _ := m.Database.GetMasteryStats()
 
-	barW := 40
+	barW := 30
 	pct := 0.0
 	if totalCards > 0 {
 		pct = float64(mastered) / float64(totalCards)
 	}
 	barStr := renderProgressBar(barW, pct)
 
+	// Fetch 7 day history
+	activity, _ := m.Database.GetLast7DaysActivity()
+	var actBlocks []string
+	weekdays := []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+	for i, count := range activity {
+		block := "░"
+		if count > 10 {
+			block = "█"
+		} else if count > 4 {
+			block = "▓"
+		} else if count > 0 {
+			block = "▒"
+		}
+
+		coloredBlock := block
+		if count > 0 {
+			coloredBlock = GreenStyle.Render(block)
+		} else {
+			coloredBlock = GrayLightStyle.Render(block)
+		}
+		actBlocks = append(actBlocks, fmt.Sprintf("%s:%s", weekdays[i], coloredBlock))
+	}
+	activityStr := strings.Join(actBlocks, " ")
+
 	statsView := StatsStyle.Width(m.Width - 4).Render(
-		fmt.Sprintf("Current Daily Streak: %s %d Days | Retention Accuracy Score: %.1f%%\nMastered Cards:       [%s] %.1f%% (%d/%d)",
-			GreenStyle.Render("🔥"), streak, ret, barStr, pct*100.0, mastered, totalCards,
+		fmt.Sprintf("Streak Tracker: %s %d Days | Accuracy: %.1f%% | Recent: %s\nMastered Cards: [%s] %.1f%% (%d/%d)",
+			GreenStyle.Render("🔥"), streak, ret, activityStr, barStr, pct*100.0, mastered, totalCards,
 		),
 	)
 	b.WriteString(statsView + "\n")
 
+	// 4. Console / Help / Status bar
 	if m.UIMode == ModeSearch {
 		b.WriteString(m.SearchInput.View())
 	} else {
