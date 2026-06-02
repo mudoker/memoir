@@ -81,11 +81,19 @@ func (m Model) ViewDashboard() string {
 	}
 	activityStr := strings.Join(actBlocks, " ")
 
-	statsView := StatsStyle.Width(m.Width - 4).Render(
-		fmt.Sprintf("Streak Tracker: %s %d Days | Accuracy: %.1f%% | Recent: %s\nMastered Cards: [%s] %.1f%% (%d/%d)",
-			GreenStyle.Render("🔥"), streak, ret, activityStr, barStr, pct*100.0, mastered, totalCards,
-		),
+	streakPart := fmt.Sprintf("🔥 Streak: %s", AccentStyle.Bold(true).Render(fmt.Sprintf("%d Days", streak)))
+	accuracyPart := fmt.Sprintf("🎯 Accuracy: %s", GreenStyle.Bold(true).Render(fmt.Sprintf("%.1f%%", ret)))
+	masteryPart := fmt.Sprintf("🏆 Mastery: [%s] %s (%d/%d)",
+		barStr,
+		AccentSecStyle.Bold(true).Render(fmt.Sprintf("%.1f%%", pct*100.0)),
+		mastered,
+		totalCards,
 	)
+
+	firstRow := fmt.Sprintf("%s   │   %s   │   %s", streakPart, accuracyPart, masteryPart)
+	secondRow := fmt.Sprintf("📅 Weekly Review Grid: %s", activityStr)
+
+	statsView := StatsStyle.Width(m.Width - 4).Render(firstRow + "\n" + secondRow)
 	b.WriteString(statsView + "\n")
 
 	// 4. Console / Help / Status bar
