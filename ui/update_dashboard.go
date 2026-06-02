@@ -23,6 +23,13 @@ func (m Model) UpdateDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if m.DPressed {
+		m.DPressed = false
+		if key == "d" {
+			return m.handleDashboardActions("d d")
+		}
+	}
+
 	switch key {
 	case "q":
 		_ = m.Database.Close()
@@ -127,8 +134,12 @@ func (m Model) UpdateDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		m.RefreshData()
 
-	case "a", "e", "d d", "enter":
+	case "a", "e", "enter":
 		return m.handleDashboardActions(key)
+
+	case "d":
+		m.DPressed = true
+		return m, nil
 	}
 
 	return m, nil

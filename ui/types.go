@@ -67,6 +67,7 @@ type Model struct {
 	StatusMsg  string
 	StatusTime time.Time
 	GPressed   bool
+	DPressed   bool
 }
 
 func NewModel(database *db.DB, cfg config.Config) Model {
