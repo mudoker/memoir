@@ -15,6 +15,13 @@ FlashTUI is a local-first, keyboard-driven, exceptionally aesthetic flashcard ap
 - **Go compiler**: Go 1.21 or higher installed on your path.
 - **Terminal Emulator**: Any modern terminal with UTF-8 character and 256-color support.
   - *Icon/Emoji Support:* FlashTUI uses standard Unicode and emoji icons (e.g. `🔥`, `📂`, `🗃️`, `⏳`, `🎯`, `🏆`, `📅`). If icons appear as hollow boxes or fail to render in your environment, configure your terminal emulator to use a font package with emoji fallback support (such as *Noto Color Emoji*) or install and use a **Nerd Font** (e.g., *JetBrainsMono Nerd Font*, *FiraCode Nerd Font*) for full glyph coverage.
+  - *Arch Linux Installation:* Install fonts from the AUR using `yay` or `paru`:
+    ```bash
+    # Install JetBrains Mono Nerd Font for developer symbols
+    yay -S ttf-jetbrains-mono-nerd
+    # Install JoyPixels for emoji support
+    yay -S ttf-joypixels
+    ```
 
 ### Compilation
 From the project workspace root directory, compile the binary:
@@ -59,3 +66,4 @@ The application will automatically initialize the base configuration at `~/.conf
 - `:tags` : Display a list of all unique tags present in the current deck.
 - `:import <path>` : Parse cards from external Markdown file (headers = front, comment blocks = hints/tags).
 - `:export <deck_name> <path>` : Compile deck tree and cards recursively to JSON file.
+- `:help` / `:h` : Display list of all available console commands.
