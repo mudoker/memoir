@@ -133,6 +133,33 @@ func (m Model) viewSessionStatistics() string {
 	b.WriteString(fmt.Sprintf("Lapsed Cards     : %d\n", uniqueLapses))
 	b.WriteString(fmt.Sprintf("Current Streak   : 🔥 %d Days\n\n", streak))
 
+	b.WriteString(lipgloss.NewStyle().Bold(true).Underline(true).Render("Rating Distribution:") + "\n")
+	ratingCounts := make(map[int]int)
+	for _, r := range m.Session.Ratings {
+		ratingCounts[r]++
+	}
+	ratingLabels := []string{"Forgot", "Hard  ", "Good  ", "Easy  ", "Perf  "}
+	for r := 1; r <= 5; r++ {
+		count := ratingCounts[r]
+		bar := ""
+		if count > 0 {
+			bar = strings.Repeat("█", count)
+		}
+		var barColorStyle lipgloss.Style
+		switch r {
+		case 1:
+			barColorStyle = RedStyle
+		case 2:
+			barColorStyle = YellowStyle
+		case 3:
+			barColorStyle = AccentSecStyle
+		default:
+			barColorStyle = GreenStyle
+		}
+		b.WriteString(fmt.Sprintf("  %d (%s): %s (%d)\n", r, ratingLabels[r-1], barColorStyle.Render(bar), count))
+	}
+	b.WriteString("\n")
+
 	b.WriteString(GrayLightStyle.Render("[Press Esc to return to the Deck Manager]"))
 
 	statsBox := lipgloss.NewStyle().
