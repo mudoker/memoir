@@ -35,17 +35,20 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 
 	parts := strings.Split(cmdText, " ")
 	op := parts[0]
+	if !strings.HasPrefix(op, ":") {
+		op = ":" + op
+	}
 
 	switch op {
-	case ":w":
+	case ":w", ":w!":
 		m.SetStatus("Synced all session database states.", false)
 		m.RefreshData()
 
-	case ":q", ":q!", ":quit", ":exit":
+	case ":q", ":q!", ":quit", ":quit!", ":exit", ":exit!":
 		_ = m.Database.Close()
 		return m, tea.Quit
 
-	case ":wq":
+	case ":wq", ":wq!", ":x", ":x!":
 		m.SetStatus("Synced all session database states.", false)
 		m.RefreshData()
 		_ = m.Database.Close()
