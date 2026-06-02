@@ -30,11 +30,19 @@ func (m Model) renderLeftPanel(leftW, panelH int) string {
 			d := m.Decks[idx]
 			isSel := m.SelectedDeckIdx == idx
 			nameText := d.Name
-			badge := fmt.Sprintf("[%d]", d.DueCount)
-			if d.DueCount > 0 {
-				badge = GreenStyle.Render(badge)
+			var badge string
+			if d.CardCount > 0 {
+				if d.DueCount > 0 {
+					badge = fmt.Sprintf("%s%s%s",
+						GrayLightStyle.Render("("),
+						GreenStyle.Bold(true).Render(fmt.Sprintf("%d", d.DueCount)) + GrayLightStyle.Render(fmt.Sprintf("/%d due", d.CardCount)),
+						GrayLightStyle.Render(")"),
+					)
+				} else {
+					badge = GrayLightStyle.Render(fmt.Sprintf("(0/%d due)", d.CardCount))
+				}
 			} else {
-				badge = MutedBadgeStyle(d.DueCount)
+				badge = GrayLightStyle.Render("(empty)")
 			}
 
 			if isSel {
