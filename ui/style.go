@@ -64,4 +64,22 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(AccentSecColor).
 			Padding(1, 2)
+
+	BadgeDecksStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(WhiteColor).
+			Background(AccentColor).
+			Padding(0, 1)
+
+	BadgeCardsStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(WhiteColor).
+			Background(AccentSecColor).
+			Padding(0, 1)
+
+	BadgeDueStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(GrayDarkColor).
+			Background(GreenColor).
+			Padding(0, 1)
 )

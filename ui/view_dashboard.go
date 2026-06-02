@@ -19,11 +19,11 @@ func (m Model) ViewDashboard() string {
 	}
 	totalCards, mastered, _ := m.Database.GetMasteryStats()
 
-	badgeDecks := AccentStyle.Render(fmt.Sprintf(" 📂 Decks: %d ", len(m.Decks)))
-	badgeCards := AccentSecStyle.Render(fmt.Sprintf(" 🗃️ Cards: %d ", totalCards))
-	badgeDue := GreenStyle.Render(fmt.Sprintf(" ⏳ Due: %d ", totalDue))
+	badgeDecks := BadgeDecksStyle.Render(fmt.Sprintf("📂 Decks: %d", len(m.Decks)))
+	badgeCards := BadgeCardsStyle.Render(fmt.Sprintf("🗃️ Cards: %d", totalCards))
+	badgeDue := BadgeDueStyle.Render(fmt.Sprintf("⏳ Due: %d", totalDue))
 
-	title := TitleStyle.Render(" FlashTUI ─ v1.0.0 ") + "  " + badgeDecks + " " + badgeCards + " " + badgeDue
+	title := TitleStyle.Render("FlashTUI ─ v1.0.0") + "  " + badgeDecks + " " + badgeCards + " " + badgeDue
 	headerText := fmt.Sprintf(" ╭%s╮\n", strings.Repeat("─", m.Width-2))
 
 	w := lipgloss.Width(title)
