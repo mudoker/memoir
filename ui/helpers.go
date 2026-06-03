@@ -123,6 +123,7 @@ func HighlightQuery(s string, query string) string {
 }
 
 func AddShadow(box string) string {
+	box = strings.TrimSuffix(box, "\n")
 	lines := strings.Split(box, "\n")
 	if len(lines) == 0 {
 		return box

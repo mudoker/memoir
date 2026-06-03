@@ -10,7 +10,7 @@ import (
 func (m Model) ViewConfirmDelete() string {
 	var content strings.Builder
 
-	innerW := 52
+	innerW := 50
 	boxW := innerW + 10 // Padding (4x2) + Borders (1x2) = 10
 
 	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(RedColor).Underline(true).Render("⚠️  CONFIRM DELETION") + "\n\n")
@@ -21,14 +21,14 @@ func (m Model) ViewConfirmDelete() string {
 	if m.ActivePanel == PanelDecks {
 		if len(m.Decks) > 0 {
 			d := m.Decks[m.SelectedDeckIdx]
-			deckName := truncate(d.Name, innerW-8)
+			deckName := truncate(d.Name, innerW-10)
 			targetInfo = fmt.Sprintf("Deck: %s", AccentStyle.Bold(true).Render(deckName))
 			warning = "Warning: Deleting this deck will recursively delete all subdecks and nested cards permanently."
 		}
 	} else {
 		if len(m.FilteredCards) > 0 {
 			c := m.FilteredCards[m.SelectedCardIdx]
-			cardFront := truncate(c.Front, innerW-14)
+			cardFront := truncate(c.Front, innerW-16)
 			targetInfo = fmt.Sprintf("Card Front: %s", AccentSecStyle.Bold(true).Render(cardFront))
 			warning = "Warning: This card will be permanently removed from the deck."
 		}
@@ -36,9 +36,12 @@ func (m Model) ViewConfirmDelete() string {
 
 	content.WriteString("Are you sure you want to delete the selected item?\n\n")
 	content.WriteString("  " + targetInfo + "\n\n")
-	content.WriteString(lipgloss.NewStyle().Foreground(RedColor).Width(innerW).Render(warning) + "\n\n")
+	
+	// Style warning text in Red, letting confirmBox handle wrapping automatically to prevent conflicts
+	content.WriteString(lipgloss.NewStyle().Foreground(RedColor).Render(warning) + "\n\n")
 
-	sep := GrayLightStyle.Render(strings.Repeat("─", innerW))
+	// Use a safe separator line length (innerW-2) to avoid border-pushing discrepancies
+	sep := GrayLightStyle.Render(strings.Repeat("─", innerW-2))
 	content.WriteString(sep + "\n")
 	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Enter] Confirm Delete  •  [Esc] Cancel"))
 
