@@ -22,6 +22,7 @@ const (
 	ModeHelp
 	ModeAdvice
 	ModeFormKey
+	ModeConfirmDelete
 )
 
 type ActivePanel int
