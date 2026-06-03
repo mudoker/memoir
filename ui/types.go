@@ -20,6 +20,7 @@ const (
 	ModeConsole
 	ModeSearch
 	ModeHelp
+	ModeAdvice
 )
 
 type ActivePanel int
@@ -48,6 +49,10 @@ type Model struct {
 	DeckScrollOffset int
 	CardScrollOffset int
 	HelpScrollOffset int
+	AdviceScrollOffset int
+
+	// Gemini State
+	GeminiAdvice string
 
 	// Active review session
 	Session *srs.Session

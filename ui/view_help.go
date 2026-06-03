@@ -77,6 +77,8 @@ func (m Model) ViewHelpPanel() string {
 	b.WriteString(row("", "  catppuccin · tokyonight · gruvbox · nord · monokai · cyberpunk · dracula · vintage") + "\n")
 	b.WriteString(row(":import <path>", "Import cards from Markdown file") + "\n")
 	b.WriteString(row(":export <d> <p>", "Export deck tree to JSON file") + "\n")
+	b.WriteString(row(":generate <t>", "Gemini AI: Generate cards on topic") + "\n")
+	b.WriteString(row(":advice", "Gemini AI: Get study coach advice") + "\n")
 
 	b.WriteString("\n" + sep + "\n")
 

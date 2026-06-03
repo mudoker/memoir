@@ -72,10 +72,18 @@ func (m Model) renderLeftPanel(leftW, panelH int) string {
 			if d.Depth > 0 {
 				prefix = strings.Repeat("  ", d.Depth-1)
 				if isLastChild(m.Decks, idx) {
-					prefix += "└ "
+					prefix += "└─ "
 				} else {
-					prefix += "├ "
+					prefix += "├─ "
 				}
+			}
+
+			// Nice visual status icon
+			icon := "📁 "
+			if isSel {
+				icon = "🎯 "
+			} else if d.DueCount > 0 {
+				icon = "⏳ "
 			}
 
 			// Badge text (due / total)
@@ -83,18 +91,18 @@ func (m Model) renderLeftPanel(leftW, panelH int) string {
 			if d.CardCount == 0 {
 				badgeRaw = "empty"
 			} else if d.DueCount > 0 {
-				badgeRaw = fmt.Sprintf("%d/%d", d.DueCount, d.CardCount)
+				badgeRaw = fmt.Sprintf("🔥 %d", d.DueCount)
 			} else {
-				badgeRaw = fmt.Sprintf("0/%d", d.CardCount)
+				badgeRaw = "✓ done"
 			}
 
-			nameMaxW := innerW - len(prefix) - len(badgeRaw) - 3
+			nameMaxW := innerW - len(prefix) - len(badgeRaw) - 4
 			if nameMaxW < 4 {
 				nameMaxW = 4
 			}
 			nameText := truncate(d.Name, nameMaxW)
 
-			rowText := fmt.Sprintf(" %s%s", prefix, nameText)
+			rowText := fmt.Sprintf(" %s%s%s", prefix, icon, nameText)
 			rowText = padRight(rowText, innerW-len(badgeRaw)-1) + " " + badgeRaw
 
 			var rowRendered string
@@ -117,15 +125,14 @@ func (m Model) renderLeftPanel(leftW, panelH int) string {
 				// Color-code the badge
 				var coloredBadge string
 				if d.CardCount == 0 {
-					coloredBadge = GrayLightStyle.Render(badgeRaw)
+					coloredBadge = GrayLightStyle.Render("empty")
 				} else if d.DueCount > 0 {
-					coloredBadge = GreenStyle.Bold(true).Render(fmt.Sprintf("%d", d.DueCount)) +
-						GrayLightStyle.Render(fmt.Sprintf("/%d", d.CardCount))
+					coloredBadge = OrangeStyle.Bold(true).Render(fmt.Sprintf("🔥 %d due", d.DueCount))
 				} else {
-					coloredBadge = GrayLightStyle.Render(badgeRaw)
+					coloredBadge = GreenStyle.Bold(true).Render("✓ done")
 				}
 
-				nameRendered := truncate(d.Name, nameMaxW)
+				nameRendered := icon + truncate(d.Name, nameMaxW)
 				prefixRendered := GrayLightStyle.Render(prefix)
 				rowRendered = " " + prefixRendered + nameRendered
 				padding := innerW - lipgloss.Width(rowRendered) - lipgloss.Width(coloredBadge) - 1

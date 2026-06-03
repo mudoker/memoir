@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -152,6 +153,61 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 		m.UIMode = ModeHelp
 		m.HelpScrollOffset = 0
 		m.SetStatus("Opened help panel.", false)
+
+	case ":generate", ":gen":
+		if len(parts) < 2 {
+			m.SetStatus("Usage: :generate <topic_name>", true)
+			return m, nil
+		}
+		apiKey := os.Getenv("GEMINI_API_KEY")
+		if apiKey == "" {
+			m.SetStatus("Error: GEMINI_API_KEY environment variable is not set.", true)
+			return m, nil
+		}
+		topic := strings.Join(parts[1:], " ")
+		m.SetStatus(fmt.Sprintf("Contacting Gemini to generate cards on '%s'...", topic), false)
+		m.UIMode = ModeDashboard
+		return m, GenerateCardsCmd(apiKey, topic)
+
+	case ":advice", ":coach":
+		apiKey := os.Getenv("GEMINI_API_KEY")
+		if apiKey == "" {
+			m.SetStatus("Error: GEMINI_API_KEY environment variable is not set.", true)
+			return m, nil
+		}
+		m.SetStatus("Asking Gemini for study coach advice...", false)
+		m.UIMode = ModeDashboard
+
+		totalCards, mastered, _ := m.Database.GetMasteryStats()
+		streak, _ := m.Database.GetDailyStreak()
+		ret, _ := m.Database.GetRetentionAccuracy()
+		activity, _ := m.Database.GetLast7DaysActivity()
+
+		var sb strings.Builder
+		sb.WriteString("Decks list:\n")
+		for _, d := range m.Decks {
+			sb.WriteString(fmt.Sprintf("- Deck: %s (Cards: %d, Due: %d)\n", d.Name, d.CardCount, d.DueCount))
+		}
+
+		prompt := fmt.Sprintf(`Analyze my study progress for these flashcards:
+- Total Decks: %d
+- Total Cards: %d
+- Mastered Cards: %d (Mastery Rate: %.1f%%)
+- Daily Streak: %d days
+- Memory Retention/Accuracy: %.1f%%
+- Last 7 days review activity: %v
+
+Decks breakdown:
+%s
+
+Provide concise, encouraging, and highly actionable advice (max 200 words) on:
+1. What I am doing well.
+2. What I should focus on next (which decks need attention).
+3. Tips for optimizing retention.
+Keep the tone encouraging, study-focused, and friendly like a memory coach. Use bullet points. Keep it clear.
+`, len(m.Decks), totalCards, mastered, float64(mastered)/float64(totalCards)*100, streak, ret, activity, sb.String())
+
+		return m, GetAdviceCmd(apiKey, prompt)
 
 	default:
 		m.SetStatus("Unknown command: "+op, true)

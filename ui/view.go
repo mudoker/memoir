@@ -24,6 +24,8 @@ func (m Model) View() string {
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.ViewReview())
 	case ModeHelp:
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.ViewHelpPanel())
+	case ModeAdvice:
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.ViewAdvicePanel())
 	default:
 		return m.ViewDashboard()
 	}

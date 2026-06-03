@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,6 +16,55 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
 		m.Height = msg.Height
+		return m, nil
+
+	case GeminiResultMsg:
+		if msg.Err != nil {
+			m.SetStatus(fmt.Sprintf("Gemini Error: %v", msg.Err), true)
+			return m, nil
+		}
+
+		deckName := fmt.Sprintf("AI-%s", msg.Topic)
+		var deckID int64
+		var found bool
+		for _, d := range m.Decks {
+			if d.Name == deckName && d.ParentID == nil {
+				deckID = d.ID
+				found = true
+				break
+			}
+		}
+
+		var err error
+		if !found {
+			deckID, err = m.Database.CreateDeck(deckName, nil)
+			if err != nil {
+				m.SetStatus(fmt.Sprintf("Failed to create deck: %v", err), true)
+				return m, nil
+			}
+		}
+
+		addedCount := 0
+		for _, c := range msg.Cards {
+			_, err = m.Database.CreateCard(deckID, c.Front, c.Back, c.Hint, c.Tags)
+			if err == nil {
+				addedCount++
+			}
+		}
+
+		m.SetStatus(fmt.Sprintf("Gemini generated %d cards in deck '%s'!", addedCount, deckName), false)
+		m.RefreshData()
+		return m, nil
+
+	case GeminiAdviceMsg:
+		if msg.Err != nil {
+			m.SetStatus(fmt.Sprintf("Gemini Error: %v", msg.Err), true)
+			return m, nil
+		}
+		m.GeminiAdvice = msg.Advice
+		m.UIMode = ModeAdvice
+		m.AdviceScrollOffset = 0
+		m.SetStatus("Gemini study advice ready!", false)
 		return m, nil
 
 	case tea.KeyMsg:
@@ -40,6 +90,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.UpdateReview(msg)
 		case ModeHelp:
 			return m.UpdateHelp(msg)
+		case ModeAdvice:
+			return m.UpdateAdvice(msg)
 		default:
 			return m.UpdateDashboard(msg)
 		}

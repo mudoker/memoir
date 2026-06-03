@@ -87,22 +87,24 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 
 	// ── Column layout ───────────────────────────────────────────────────────
 	colIdW := 4
-	colDueW := 11
+	colDueW := 12
 	colEaseW := 5
 	colRepW := 4
-	colTagsW := 13
-	colFrontW := innerW - colIdW - colDueW - colEaseW - colRepW - colTagsW - 15
+	colTagsW := 12
+	colFrontW := innerW - colIdW - colDueW - colEaseW - colRepW - colTagsW - 17
 	if colFrontW < 8 {
 		colFrontW = 8
 	}
 
+	separator := GrayLightStyle.Render(" │ ")
+
 	// Column headers
-	colHeaders := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colIdW).Render("ID"),
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colFrontW).Render("FRONT"),
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colDueW).Render("DUE"),
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colEaseW).Render("EASE"),
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colRepW).Render("REP"),
+	colHeaders := fmt.Sprintf(" %s %s %s %s %s %s %s %s %s %s %s",
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colIdW).Render("ID"), separator,
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colFrontW).Render("FRONT TEXT"), separator,
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colDueW).Render("SCHEDULED"), separator,
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colEaseW).Render("EASE"), separator,
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colRepW).Render("REPS"), separator,
 		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colTagsW).Render("TAGS"),
 	)
 	sb.WriteString(colHeaders + "\n")
@@ -129,7 +131,16 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 			isSel := m.SelectedCardIdx == idx
 
 			idStr := fmt.Sprintf("%d", c.ID)
-			dueText := formatDue(c.DueAt)
+			rawDue := formatDue(c.DueAt)
+			var dueText string
+			if rawDue == "Instantly" {
+				dueText = "⚡ Now"
+			} else if rawDue == "Tomorrow" {
+				dueText = "📅 Tomorrow"
+			} else {
+				dueText = "📅 " + strings.Replace(rawDue, " Days", "d", 1)
+			}
+
 			easeText := fmt.Sprintf("%.1f", c.EaseFactor)
 			repText := fmt.Sprintf("%d", c.RepetitionCount)
 			frontText := truncate(c.Front, colFrontW)
@@ -144,7 +155,7 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 
 			if isSel {
 				// Full-width highlight row
-				rawRow := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
+				rawRow := fmt.Sprintf(" %s │ %s │ %s │ %s │ %s │ %s",
 					padRight(idStr, colIdW),
 					padRight(frontText, colFrontW),
 					padRight(dueText, colDueW),
@@ -171,7 +182,7 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 				coloredFront := lipgloss.NewStyle().Width(colFrontW).Render(HighlightQuery(padRight(frontText, colFrontW), query))
 
 				var coloredDue string
-				if dueText == "Instantly" {
+				if rawDue == "Instantly" {
 					coloredDue = GreenStyle.Bold(true).Width(colDueW).Render(dueText)
 				} else {
 					coloredDue = GrayLightStyle.Width(colDueW).Render(dueText)
@@ -189,8 +200,13 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 				coloredRep := GrayLightStyle.Width(colRepW).Render(repText)
 				coloredTags := AccentSecStyle.Width(colTagsW).Render(HighlightQuery(tagsText, query))
 
-				row := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
-					coloredId, coloredFront, coloredDue, coloredEase, coloredRep, coloredTags)
+				row := fmt.Sprintf(" %s %s %s %s %s %s %s %s %s %s %s",
+					coloredId, separator,
+					coloredFront, separator,
+					coloredDue, separator,
+					coloredEase, separator,
+					coloredRep, separator,
+					coloredTags)
 				sb.WriteString(row + "\n")
 			}
 		}
