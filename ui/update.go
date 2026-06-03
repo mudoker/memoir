@@ -92,6 +92,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.UpdateHelp(msg)
 		case ModeAdvice:
 			return m.UpdateAdvice(msg)
+		case ModeFormKey:
+			return m.UpdateFormKey(msg)
 		default:
 			return m.UpdateDashboard(msg)
 		}
