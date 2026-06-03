@@ -13,7 +13,8 @@ func (m Model) ViewConfirmDelete() string {
 	innerW := 50
 	boxW := innerW + 10 // Padding (4x2) + Borders (1x2) = 10
 
-	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(RedColor).Underline(true).Render("⚠️  CONFIRM DELETION") + "\n\n")
+	// Use plain text without emojis to prevent terminal width discrepancies
+	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(RedColor).Underline(true).Render("CONFIRM DELETION") + "\n\n")
 
 	var targetInfo string
 	var warning string
@@ -36,12 +37,16 @@ func (m Model) ViewConfirmDelete() string {
 
 	content.WriteString("Are you sure you want to delete the selected item?\n\n")
 	content.WriteString("  " + targetInfo + "\n\n")
-	
-	// Style warning text in Red, letting confirmBox handle wrapping automatically to prevent conflicts
-	content.WriteString(lipgloss.NewStyle().Foreground(RedColor).Render(warning) + "\n\n")
 
-	// Use a safe separator line length (innerW-2) to avoid border-pushing discrepancies
-	sep := GrayLightStyle.Render(strings.Repeat("─", innerW-2))
+	// Manually wrap warning text to fit innerW exactly
+	wrappedWarning := wrapText(warning, innerW)
+	for _, line := range strings.Split(wrappedWarning, "\n") {
+		content.WriteString(RedStyle.Render(line) + "\n")
+	}
+	content.WriteString("\n")
+
+	// Use ASCII hyphens for separator to prevent ambiguous width layout bugs in CJK or customized terminals
+	sep := GrayLightStyle.Render(strings.Repeat("-", innerW))
 	content.WriteString(sep + "\n")
 	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Enter] Confirm Delete  •  [Esc] Cancel"))
 
@@ -53,4 +58,23 @@ func (m Model) ViewConfirmDelete() string {
 		Render(content.String())
 
 	return AddShadow(confirmBox)
+}
+
+func wrapText(text string, limit int) string {
+	words := strings.Fields(text)
+	if len(words) == 0 {
+		return ""
+	}
+	var lines []string
+	currLine := words[0]
+	for _, word := range words[1:] {
+		if len(currLine)+1+len(word) > limit {
+			lines = append(lines, currLine)
+			currLine = word
+		} else {
+			currLine += " " + word
+		}
+	}
+	lines = append(lines, currLine)
+	return strings.Join(lines, "\n")
 }
