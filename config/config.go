@@ -11,6 +11,7 @@ type Config struct {
 	DatabasePath string `yaml:"database_path"`
 	ThemeName    string `yaml:"theme_name"`
 	Theme        Theme  `yaml:"theme"`
+	GeminiAPIKey string `yaml:"gemini_api_key"`
 }
 
 type Theme struct {
@@ -30,6 +31,7 @@ func DefaultConfig() Config {
 			BackgroundColor: "#1e1e2e", // Mocha base
 			TextColor:       "#cdd6f4", // Text
 		},
+		GeminiAPIKey: "",
 	}
 }
 
@@ -73,6 +75,9 @@ func LoadConfig() (Config, error) {
 	}
 	if fileCfg.ThemeName != "" {
 		cfg.ThemeName = fileCfg.ThemeName
+	}
+	if fileCfg.GeminiAPIKey != "" {
+		cfg.GeminiAPIKey = fileCfg.GeminiAPIKey
 	}
 	if fileCfg.Theme.PrimaryColor != "" {
 		cfg.Theme.PrimaryColor = fileCfg.Theme.PrimaryColor
