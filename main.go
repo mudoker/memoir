@@ -39,13 +39,21 @@ func main() {
 }
 
 func bootstrapIfEmpty(database *db.DB) error {
+	bootstrapped, err := database.IsBootstrapped()
+	if err != nil {
+		return err
+	}
+	if bootstrapped {
+		return nil
+	}
+
 	decks, err := database.GetDeckTree()
 	if err != nil {
 		return err
 	}
 
 	if len(decks) > 0 {
-		return nil
+		return database.SetBootstrapped()
 	}
 
 	parentID, err := database.CreateDeck("Go-Core", nil)
@@ -86,5 +94,5 @@ func bootstrapIfEmpty(database *db.DB) error {
 		return err
 	}
 
-	return nil
+	return database.SetBootstrapped()
 }
