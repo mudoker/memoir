@@ -21,6 +21,7 @@ const (
 	ModeSearch
 	ModeHelp
 	ModeAdvice
+	ModeFormKey
 )
 
 type ActivePanel int
@@ -52,7 +53,9 @@ type Model struct {
 	AdviceScrollOffset int
 
 	// Gemini State
-	GeminiAdvice string
+	GeminiAdvice       string
+	PendingGeminiCmd   string // Track what command the user was trying to run: "generate" or "advice"
+	PendingGeminiTopic string // Track the topic for generate
 
 	// Active review session
 	Session *srs.Session
@@ -65,6 +68,7 @@ type Model struct {
 	FormCardBack  textinput.Model
 	FormCardHint  textinput.Model
 	FormCardTags  textinput.Model
+	FormGeminiKey textinput.Model
 
 	FormActiveField int   // 0: Front, 1: Back, 2: Hint, 3: Tags
 	FormEditID      int64 // 0 if creating, otherwise ID being edited
@@ -106,6 +110,11 @@ func NewModel(database *db.DB, cfg config.Config) Model {
 	formCardTags.Prompt = ""
 	formCardTags.CharLimit = 100
 
+	formGeminiKey := textinput.New()
+	formGeminiKey.Prompt = "API Key: "
+	formGeminiKey.EchoMode = textinput.EchoPassword
+	formGeminiKey.CharLimit = 100
+
 	m := Model{
 		Database:      database,
 		Config:        cfg,
@@ -118,6 +127,7 @@ func NewModel(database *db.DB, cfg config.Config) Model {
 		FormCardBack:  formCardBack,
 		FormCardHint:  formCardHint,
 		FormCardTags:  formCardTags,
+		FormGeminiKey: formGeminiKey,
 	}
 
 	InitStyles(cfg.Theme)
