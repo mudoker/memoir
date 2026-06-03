@@ -5,8 +5,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"flashtui/config"
 	"flashtui/db"
 )
 
@@ -161,10 +163,18 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 		}
 		apiKey := os.Getenv("GEMINI_API_KEY")
 		if apiKey == "" {
-			m.SetStatus("Error: GEMINI_API_KEY environment variable is not set.", true)
-			return m, nil
+			apiKey = m.Config.GeminiAPIKey
 		}
 		topic := strings.Join(parts[1:], " ")
+		if apiKey == "" {
+			m.UIMode = ModeFormKey
+			m.FormGeminiKey.SetValue("")
+			m.FormGeminiKey.Focus()
+			m.PendingGeminiCmd = "generate"
+			m.PendingGeminiTopic = topic
+			m.SetStatus("Gemini API key is required. Please type it below:", false)
+			return m, textinput.Blink
+		}
 		m.SetStatus(fmt.Sprintf("Contacting Gemini to generate cards on '%s'...", topic), false)
 		m.UIMode = ModeDashboard
 		return m, GenerateCardsCmd(apiKey, topic)
@@ -172,8 +182,16 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 	case ":advice", ":coach":
 		apiKey := os.Getenv("GEMINI_API_KEY")
 		if apiKey == "" {
-			m.SetStatus("Error: GEMINI_API_KEY environment variable is not set.", true)
-			return m, nil
+			apiKey = m.Config.GeminiAPIKey
+		}
+		if apiKey == "" {
+			m.UIMode = ModeFormKey
+			m.FormGeminiKey.SetValue("")
+			m.FormGeminiKey.Focus()
+			m.PendingGeminiCmd = "advice"
+			m.PendingGeminiTopic = ""
+			m.SetStatus("Gemini API key is required. Please type it below:", false)
+			return m, textinput.Blink
 		}
 		m.SetStatus("Asking Gemini for study coach advice...", false)
 		m.UIMode = ModeDashboard
@@ -208,6 +226,21 @@ Keep the tone encouraging, study-focused, and friendly like a memory coach. Use 
 `, len(m.Decks), totalCards, mastered, float64(mastered)/float64(totalCards)*100, streak, ret, activity, sb.String())
 
 		return m, GetAdviceCmd(apiKey, prompt)
+
+	case ":key", ":gemini-key":
+		if len(parts) < 2 {
+			m.SetStatus("Usage: :key <your_gemini_api_key>", true)
+			return m, nil
+		}
+		newKey := parts[1]
+		m.Config.GeminiAPIKey = newKey
+		err := config.SaveConfig(m.Config)
+		if err != nil {
+			m.SetStatus(fmt.Sprintf("Failed to save config: %v", err), true)
+		} else {
+			m.SetStatus("Gemini API key updated and saved permanently to config.yaml.", false)
+		}
+		return m, nil
 
 	default:
 		m.SetStatus("Unknown command: "+op, true)
