@@ -35,12 +35,89 @@ func DefaultConfig() Config {
 	}
 }
 
-func LoadConfig() (Config, error) {
+func getConfigDir() string {
+	// Try to find project root by looking for go.mod starting from current working directory
+	if dir, err := os.Getwd(); err == nil {
+		for {
+			if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+				return filepath.Join(dir, ".flashtui")
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+
+	// Fallback: Try to find project root by looking for go.mod starting from executable directory
+	if execPath, err := os.Executable(); err == nil {
+		dir := filepath.Dir(execPath)
+		for {
+			if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+				return filepath.Join(dir, ".flashtui")
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+
+	// Fallback to user home directory
+	home, err := os.UserHomeDir()
+	if err == nil {
+		return filepath.Join(home, ".config", "flashtui")
+	}
+
+	return ".flashtui"
+}
+
+func migrateFromOldConfigDir(newDir string) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return DefaultConfig(), err
+		return
 	}
-	configDir := filepath.Join(home, ".config", "flashtui")
+	oldDir := filepath.Join(home, ".config", "flashtui")
+	if oldDir == newDir {
+		return
+	}
+
+	// If old directory doesn't exist, nothing to migrate
+	if _, err := os.Stat(oldDir); os.IsNotExist(err) {
+		return
+	}
+
+	// Ensure new directory exists
+	if err := os.MkdirAll(newDir, 0755); err != nil {
+		return
+	}
+
+	copyFile := func(src, dst string) error {
+		if _, err := os.Stat(dst); err == nil {
+			// Destination already exists, do not overwrite
+			return nil
+		}
+		data, err := os.ReadFile(src)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(dst, data, 0644)
+	}
+
+	_ = copyFile(filepath.Join(oldDir, "config.yaml"), filepath.Join(newDir, "config.yaml"))
+	_ = copyFile(filepath.Join(oldDir, "data.db"), filepath.Join(newDir, "data.db"))
+	_ = copyFile(filepath.Join(oldDir, "data.db-wal"), filepath.Join(newDir, "data.db-wal"))
+	_ = copyFile(filepath.Join(oldDir, "data.db-shm"), filepath.Join(newDir, "data.db-shm"))
+}
+
+func LoadConfig() (Config, error) {
+	configDir := getConfigDir()
+
+	// Try to migrate files from old config folder if new one doesn't exist or is empty
+	migrateFromOldConfigDir(configDir)
+
 	configPath := filepath.Join(configDir, "config.yaml")
 
 	// Ensure config directory exists
@@ -71,7 +148,22 @@ func LoadConfig() (Config, error) {
 	}
 
 	if fileCfg.DatabasePath != "" {
-		cfg.DatabasePath = fileCfg.DatabasePath
+		home, err := os.UserHomeDir()
+		if err == nil {
+			oldDefaultDB := filepath.Join(home, ".config", "flashtui", "data.db")
+			if fileCfg.DatabasePath == oldDefaultDB {
+				cfg.DatabasePath = filepath.Join(configDir, "data.db")
+				// Update config file to point to the new workspace database path
+				cfg.ThemeName = fileCfg.ThemeName
+				cfg.GeminiAPIKey = fileCfg.GeminiAPIKey
+				cfg.Theme = fileCfg.Theme
+				_ = SaveConfig(cfg)
+			} else {
+				cfg.DatabasePath = fileCfg.DatabasePath
+			}
+		} else {
+			cfg.DatabasePath = fileCfg.DatabasePath
+		}
 	}
 	if fileCfg.ThemeName != "" {
 		cfg.ThemeName = fileCfg.ThemeName
@@ -96,11 +188,7 @@ func LoadConfig() (Config, error) {
 }
 
 func SaveConfig(cfg Config) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	configDir := filepath.Join(home, ".config", "flashtui")
+	configDir := getConfigDir()
 	configPath := filepath.Join(configDir, "config.yaml")
 
 	data, err := yaml.Marshal(cfg)
