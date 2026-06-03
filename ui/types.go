@@ -47,6 +47,7 @@ type Model struct {
 	SelectedCardIdx  int
 	DeckScrollOffset int
 	CardScrollOffset int
+	HelpScrollOffset int
 
 	// Active review session
 	Session *srs.Session

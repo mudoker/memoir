@@ -21,7 +21,7 @@ func (m Model) ViewFormDeck() string {
 	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Enter] Confirm  |  [Esc] Cancel"))
 
 	formBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
+		Border(lipgloss.DoubleBorder()).
 		BorderForeground(AccentColor).
 		Padding(1, 4).
 		Width(50).
@@ -73,7 +73,7 @@ func (m Model) ViewFormCard() string {
 	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Tab] Cycle Fields  •  [Enter] Save  •  [Esc] Cancel"))
 
 	formBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
+		Border(lipgloss.DoubleBorder()).
 		BorderForeground(AccentColor).
 		Padding(1, 4).
 		Width(72).

@@ -150,6 +150,7 @@ func (m Model) executeConsoleCommand(cmdText string) (tea.Model, tea.Cmd) {
 
 	case ":help", ":h":
 		m.UIMode = ModeHelp
+		m.HelpScrollOffset = 0
 		m.SetStatus("Opened help panel.", false)
 
 	default:

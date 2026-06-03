@@ -35,6 +35,24 @@ var Themes = map[string]config.Theme{
 		BackgroundColor: "#272822", // Vintage dark
 		TextColor:       "#f8f8f2", // Warm text
 	},
+	"cyberpunk": {
+		PrimaryColor:    "#ff007f", // Neon pink/magenta
+		SecondaryColor:  "#00f0ff", // Neon cyan
+		BackgroundColor: "#080810", // Cyber dark base
+		TextColor:       "#e0e0ff", // Electric light blue-white
+	},
+	"dracula": {
+		PrimaryColor:    "#ff79c6", // Pink
+		SecondaryColor:  "#50fa7b", // Green
+		BackgroundColor: "#282a36", // Dracula dark bg
+		TextColor:       "#f8f8f2", // Light grey-white
+	},
+	"vintage": {
+		PrimaryColor:    "#e78a4e", // Vintage copper orange
+		SecondaryColor:  "#a9b665", // Sage green
+		BackgroundColor: "#1d2021", // Warm charcoal
+		TextColor:       "#d4be98", // Light warm parchment
+	},
 }
 
 func (m *Model) ApplyTheme(name string) bool {

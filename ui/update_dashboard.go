@@ -143,6 +143,7 @@ func (m Model) UpdateDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "?":
 		m.UIMode = ModeHelp
+		m.HelpScrollOffset = 0
 		return m, nil
 
 	case "tab":

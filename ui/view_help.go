@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -19,7 +20,7 @@ func (m Model) ViewHelpPanel() string {
 		keyStyle := lipgloss.NewStyle().
 			Bold(true).
 			Foreground(AccentSecColor).
-			Width(20)
+			Width(22)
 		return keyStyle.Render(key) + GrayLightStyle.Render(desc)
 	}
 
@@ -38,7 +39,7 @@ func (m Model) ViewHelpPanel() string {
 	// Title
 	b.WriteString(lipgloss.NewStyle().
 		Bold(true).Foreground(AccentColor).
-		Render(" FlashTUI — Keyboard Reference") + "\n")
+		Render(" ⚡ FlashTUI — Keyboard Reference") + "\n")
 	b.WriteString(sep + "\n")
 
 	// Navigation
@@ -73,7 +74,7 @@ func (m Model) ViewHelpPanel() string {
 	b.WriteString(row(":tag <name>", "Filter cards by tag  (blank = clear)") + "\n")
 	b.WriteString(row(":tags", "List all tags in current deck") + "\n")
 	b.WriteString(row(":theme <name>", "Switch colour theme") + "\n")
-	b.WriteString(row("", "  catppuccin · tokyonight · gruvbox · nord · monokai") + "\n")
+	b.WriteString(row("", "  catppuccin · tokyonight · gruvbox · nord · monokai · cyberpunk · dracula · vintage") + "\n")
 	b.WriteString(row(":import <path>", "Import cards from Markdown file") + "\n")
 	b.WriteString(row(":export <d> <p>", "Export deck tree to JSON file") + "\n")
 
@@ -95,14 +96,57 @@ func (m Model) ViewHelpPanel() string {
 	) + "\n")
 
 	b.WriteString("\n" + sep + "\n")
-	b.WriteString(GrayLightStyle.Render("Press Esc or q to close this panel"))
+
+	// Split generated lines
+	lines := strings.Split(b.String(), "\n")
+	totalLines := len(lines)
+
+	// Available height inside the help box
+	innerMaxHeight := m.Height - 8
+	if innerMaxHeight < 10 {
+		innerMaxHeight = 10
+	}
+
+	maxOffset := totalLines - innerMaxHeight
+	if maxOffset < 0 {
+		maxOffset = 0
+	}
+
+	if m.HelpScrollOffset > maxOffset {
+		m.HelpScrollOffset = maxOffset
+	}
+	if m.HelpScrollOffset < 0 {
+		m.HelpScrollOffset = 0
+	}
+
+	endIdx := m.HelpScrollOffset + innerMaxHeight
+	if endIdx > totalLines {
+		endIdx = totalLines
+	}
+
+	// Slice visible lines
+	visibleLines := lines[m.HelpScrollOffset:endIdx]
+
+	// Create scroll status footer
+	var scrollFooter string
+	if totalLines > innerMaxHeight {
+		scrollPct := int(float64(endIdx) / float64(totalLines) * 100)
+		scrollFooter = fmt.Sprintf("Scroll: %d-%d / %d (%d%%) · j/k scroll · esc/q close", m.HelpScrollOffset+1, endIdx, totalLines, scrollPct)
+	} else {
+		scrollFooter = "esc/q to close reference"
+	}
+
+	footerLine := lipgloss.NewStyle().Foreground(AccentColor).Render(scrollFooter)
+
+	// Reassemble display content
+	displayContent := strings.Join(visibleLines, "\n") + "\n" + sep + "\n" + footerLine
 
 	helpBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(AccentColor).
 		Padding(1, 3).
 		Width(w).
-		Render(b.String())
+		Render(displayContent)
 
 	return AddShadow(helpBox)
 }

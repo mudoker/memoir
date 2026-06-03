@@ -10,15 +10,18 @@ import (
 func (m Model) renderLeftPanel(leftW, panelH int) string {
 	isActive := m.ActivePanel == PanelDecks && m.UIMode == ModeDashboard
 
+	var borderType lipgloss.Border
 	var borderColor lipgloss.Color
 	if isActive {
+		borderType = lipgloss.DoubleBorder()
 		borderColor = AccentColor
 	} else {
-		borderColor = GrayMidColor
+		borderType = lipgloss.RoundedBorder()
+		borderColor = GrayMid2Color
 	}
 
 	leftStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
+		Border(borderType).
 		BorderForeground(borderColor).
 		Padding(0, 1).
 		Width(leftW - 2).
