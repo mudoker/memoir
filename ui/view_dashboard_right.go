@@ -200,7 +200,6 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 
 				row := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
 					coloredId, coloredFront, coloredDue, coloredEase, coloredRep, coloredTags)
-				row = truncate(row, innerW)
 				sb.WriteString(row + "\n")
 			}
 		}
