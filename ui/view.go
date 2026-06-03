@@ -28,6 +28,8 @@ func (m Model) View() string {
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.ViewAdvicePanel())
 	case ModeFormKey:
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.ViewFormKey())
+	case ModeConfirmDelete:
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.ViewConfirmDelete())
 	default:
 		return m.ViewDashboard()
 	}
