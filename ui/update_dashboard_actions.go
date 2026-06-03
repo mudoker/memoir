@@ -67,27 +67,12 @@ func (m Model) handleDashboardActions(key string) (tea.Model, tea.Cmd) {
 			if len(m.Decks) == 0 {
 				return m, nil
 			}
-			d := m.Decks[m.SelectedDeckIdx]
-			if err := m.Database.DeleteDeck(d.ID); err != nil {
-				m.SetStatus("Delete Deck error: "+err.Error(), true)
-			} else {
-				m.SetStatus(fmt.Sprintf("Deleted deck '%s' and all contents recursively.", d.Name), false)
-				m.SelectedDeckIdx = 0
-				m.RefreshData()
-			}
 		} else {
 			if len(m.FilteredCards) == 0 {
 				return m, nil
 			}
-			c := m.FilteredCards[m.SelectedCardIdx]
-			if err := m.Database.DeleteCard(c.ID); err != nil {
-				m.SetStatus("Delete Card error: "+err.Error(), true)
-			} else {
-				m.SetStatus("Deleted card.", false)
-				m.SelectedCardIdx = 0
-				m.RefreshData()
-			}
 		}
+		m.UIMode = ModeConfirmDelete
 
 	case "enter":
 		if m.ActivePanel == PanelDecks && len(m.Decks) > 0 {
