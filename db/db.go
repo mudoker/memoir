@@ -132,6 +132,10 @@ func (db *DB) migrate() error {
 			post_ease_factor REAL NOT NULL,
 			FOREIGN KEY(card_id) REFERENCES cards(id) ON DELETE CASCADE
 		);`,
+		`CREATE TABLE IF NOT EXISTS metadata (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL
+		);`,
 		`CREATE INDEX IF NOT EXISTS idx_decks_parent ON decks(parent_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_cards_deck ON cards(deck_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_cards_due ON cards(due_at);`,
@@ -144,4 +148,21 @@ func (db *DB) migrate() error {
 		}
 	}
 	return nil
+}
+
+func (db *DB) IsBootstrapped() (bool, error) {
+	var val string
+	err := db.Conn.QueryRow("SELECT value FROM metadata WHERE key = 'bootstrapped'").Scan(&val)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return val == "true", nil
+}
+
+func (db *DB) SetBootstrapped() error {
+	_, err := db.Conn.Exec("INSERT OR REPLACE INTO metadata (key, value) VALUES ('bootstrapped', 'true')")
+	return err
 }
