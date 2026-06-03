@@ -81,3 +81,24 @@ func (m Model) ViewFormCard() string {
 
 	return AddShadow(formBox)
 }
+
+func (m Model) ViewFormKey() string {
+	var content strings.Builder
+	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Underline(true).Render("GEMINI AI KEY SETUP") + "\n\n")
+	content.WriteString(lipgloss.NewStyle().Foreground(TextColor).Width(52).Render(
+		"To enable Gemini AI features (generating flashcards and study advice), you need a Gemini API Key. You can get one for free at Google AI Studio.\n",
+	) + "\n")
+
+	label := AccentStyle.Bold(true).Render("❯ ") + lipgloss.NewStyle().Bold(true).Foreground(WhiteColor).Render("Key: ")
+	content.WriteString(label + m.FormGeminiKey.View() + "\n\n")
+	content.WriteString(lipgloss.NewStyle().Foreground(GrayLightColor).Render("[Enter] Confirm  |  [Esc] Cancel"))
+
+	formBox := lipgloss.NewStyle().
+		Border(lipgloss.DoubleBorder()).
+		BorderForeground(AccentColor).
+		Padding(1, 4).
+		Width(60).
+		Render(content.String())
+
+	return AddShadow(formBox)
+}
