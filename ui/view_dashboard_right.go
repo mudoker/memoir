@@ -91,21 +91,19 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 	colEaseW := 5
 	colRepW := 4
 	colTagsW := 12
-	colFrontW := innerW - colIdW - colDueW - colEaseW - colRepW - colTagsW - 17
+	colFrontW := innerW - colIdW - colDueW - colEaseW - colRepW - colTagsW - 10
 	if colFrontW < 8 {
 		colFrontW = 8
 	}
 
-	separator := GrayLightStyle.Render(" │ ")
-
 	// Column headers
-	colHeaders := fmt.Sprintf(" %s %s %s %s %s %s %s %s %s %s %s",
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colIdW).Render("ID"), separator,
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colFrontW).Render("FRONT TEXT"), separator,
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colDueW).Render("SCHEDULED"), separator,
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colEaseW).Render("EASE"), separator,
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colRepW).Render("REPS"), separator,
-		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Width(colTagsW).Render("TAGS"),
+	colHeaders := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Render(padRight("ID", colIdW)),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Render(padRight("FRONT TEXT", colFrontW)),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Render(padRight("SCHEDULED", colDueW)),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Render(padRight("EASE", colEaseW)),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Render(padRight("REPS", colRepW)),
+		lipgloss.NewStyle().Bold(true).Foreground(AccentSecColor).Render(padRight("TAGS", colTagsW)),
 	)
 	sb.WriteString(colHeaders + "\n")
 	sb.WriteString(GrayLightStyle.Render(strings.Repeat("─", innerW)) + "\n")
@@ -155,7 +153,7 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 
 			if isSel {
 				// Full-width highlight row
-				rawRow := fmt.Sprintf(" %s │ %s │ %s │ %s │ %s │ %s",
+				rawRow := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
 					padRight(idStr, colIdW),
 					padRight(frontText, colFrontW),
 					padRight(dueText, colDueW),
@@ -178,35 +176,31 @@ func (m Model) renderRightPanel(rightW, panelH int) string {
 			} else {
 				// Color-coded unselected row
 				query := m.SearchInput.Value()
-				coloredId := GrayLightStyle.Width(colIdW).Render(idStr)
-				coloredFront := lipgloss.NewStyle().Width(colFrontW).Render(HighlightQuery(padRight(frontText, colFrontW), query))
+				coloredId := GrayLightStyle.Render(padRight(idStr, colIdW))
+				coloredFront := lipgloss.NewStyle().Render(HighlightQuery(padRight(frontText, colFrontW), query))
 
 				var coloredDue string
 				if rawDue == "Instantly" {
-					coloredDue = GreenStyle.Bold(true).Width(colDueW).Render(dueText)
+					coloredDue = GreenStyle.Bold(true).Render(padRight(dueText, colDueW))
 				} else {
-					coloredDue = GrayLightStyle.Width(colDueW).Render(dueText)
+					coloredDue = GrayLightStyle.Render(padRight(dueText, colDueW))
 				}
 
 				var coloredEase string
 				if c.EaseFactor < 1.8 {
-					coloredEase = RedStyle.Width(colEaseW).Render(easeText)
+					coloredEase = RedStyle.Render(padRight(easeText, colEaseW))
 				} else if c.EaseFactor >= 2.5 {
-					coloredEase = GreenStyle.Width(colEaseW).Render(easeText)
+					coloredEase = GreenStyle.Render(padRight(easeText, colEaseW))
 				} else {
-					coloredEase = YellowStyle.Width(colEaseW).Render(easeText)
+					coloredEase = YellowStyle.Render(padRight(easeText, colEaseW))
 				}
 
-				coloredRep := GrayLightStyle.Width(colRepW).Render(repText)
-				coloredTags := AccentSecStyle.Width(colTagsW).Render(HighlightQuery(tagsText, query))
+				coloredRep := GrayLightStyle.Render(padRight(repText, colRepW))
+				coloredTags := AccentSecStyle.Render(HighlightQuery(padRight(tagsText, colTagsW), query))
 
-				row := fmt.Sprintf(" %s %s %s %s %s %s %s %s %s %s %s",
-					coloredId, separator,
-					coloredFront, separator,
-					coloredDue, separator,
-					coloredEase, separator,
-					coloredRep, separator,
-					coloredTags)
+				row := fmt.Sprintf("%s  %s  %s  %s  %s  %s",
+					coloredId, coloredFront, coloredDue, coloredEase, coloredRep, coloredTags)
+				row = truncate(row, innerW)
 				sb.WriteString(row + "\n")
 			}
 		}
